@@ -44,7 +44,7 @@ namespace Track.AI
 
             var json = await response.Content.ReadAsStringAsync();
 
-            // 🔥 IMPORTANT: Show real error if API fails
+            // Show real error if API fails
             if (!response.IsSuccessStatusCode)
             {
                 throw new Exception($"Gemini API Error ({response.StatusCode}): {json}");
@@ -52,7 +52,7 @@ namespace Track.AI
 
             using var doc = JsonDocument.Parse(json);
 
-            // 🔥 SAFE parsing (prevents runtime crashes)
+            // SAFE parsing 
             if (!doc.RootElement.TryGetProperty("candidates", out var candidates))
             {
                 throw new Exception("Invalid Gemini response: " + json);

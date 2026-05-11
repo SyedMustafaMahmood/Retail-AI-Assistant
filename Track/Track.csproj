@@ -18,6 +18,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.1.7" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <Content Include="Prompts\PolicyQA.md" />
+	  <Content Include="Prompts\TicketSummarization.md" />
+	</ItemGroup>
 
 </Project>

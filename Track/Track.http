@@ -1,6 +1,8 @@
 @Track_HostAddress = http://localhost:5208
 
-GET {{Track_HostAddress}}/weatherforecast/
-Accept: application/json
+POST http://localhost:5208/api/ticket/summarize
+Content-Type: application/json
 
-###
+{
+  "ticket": "Customer placed an order for Nike running shoes on April 10th. The expected delivery date was April 15th but the package arrived on April 20th. The customer is frustrated because they needed the shoes for a marathon event. Additionally, the box was slightly damaged upon arrival. The customer contacted support twice but did not receive a timely response. They are now asking for a refund or compensation for the inconvenience caused."
+}

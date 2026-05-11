@@ -4,9 +4,8 @@ using Track.DTO;
 
 namespace Track.Controllers
 {
-
     [ApiController]
-    [Route("api/ticket")]
+    [Route("api/tickets")]
     public class TicketController : ControllerBase
     {
         private readonly TicketService _service;
@@ -16,10 +15,27 @@ namespace Track.Controllers
             _service = service;
         }
 
-        [HttpPost("summarize")]
-        public async Task<IActionResult> Summarize([FromBody] TicketRequest request)
+        [HttpPost]
+        public async Task<IActionResult> CreateTicket([FromBody] TicketRequest request)
         {
-            var result = await _service.SummarizeAsync(request.Ticket);
+            var ticket = await _service.CreateTicketAsync(request);
+            return Ok(ticket);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllTickets()
+        {
+            var tickets = await _service.GetAllTicketsAsync();
+            return Ok(tickets);
+        }
+
+        [HttpPost("{id}/summarize")]
+        public async Task<IActionResult> Summarize(int id)
+        {
+            var result = await _service.SummarizeByIdAsync(id);
+            if (result == null)
+                return NotFound($"Ticket with ID {id} not found.");
+
             return Ok(result);
         }
     }

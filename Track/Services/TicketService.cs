@@ -1,10 +1,12 @@
-﻿using Track.AI;
+﻿using Microsoft.EntityFrameworkCore;
+using Track.AI;
 using Track.Data;
+using Track.DTO;
+using Track.Helpers;
 using Track.Models;
 
 namespace Track.Services
 {
-    // Services/TicketService.cs
     public class TicketService
     {
         private readonly IAIClient _aiClient;
@@ -16,31 +18,74 @@ namespace Track.Services
             _db = db;
         }
 
-        public async Task<string> SummarizeAsync(string ticket)
+        //  Create ticket and save to DB
+        public async Task<Ticket> CreateTicketAsync(TicketRequest request)
         {
+            var ticket = new Ticket
+            {
+                CustomerName = request.CustomerName,
+                Subject = request.Subject,
+                Description = request.Description,
+                Status = "Open",
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _db.Tickets.Add(ticket);
+            await _db.SaveChangesAsync();
+
+            return ticket;
+        }
+
+        //  Get all tickets from DB
+        public async Task<List<Ticket>> GetAllTicketsAsync()
+        {
+            return await _db.Tickets.OrderByDescending(t => t.CreatedAt).ToListAsync();
+        }
+
+        //  Fetch ticket by ID → summarize via Gemini
+        public async Task<TicketSummaryResponse?> SummarizeByIdAsync(int id)
+        {
+            var ticket = await _db.Tickets.FindAsync(id);
+
+            if (ticket == null)
+                return null;
+
             try
             {
-                var prompt = $"Summarize this support ticket:\n{ticket}";
+                var template = MarkdownLoader.Load("TicketSummarization.md");
 
-                var result = await _aiClient.GetCompletionAsync(prompt);
+                var prompt = MarkdownLoader.Replace(template, new Dictionary<string, string>
+                {
+                    { "customer", ticket.CustomerName },
+                    { "subject", ticket.Subject },
+                    { "description", ticket.Description }
+                });
+
+                var summary = await _aiClient.GetCompletionAsync(prompt);
 
                 _db.RequestLogs.Add(new RequestLog
                 {
-                    InputText = ticket,
-                    OutputText = result,
+                    InputText = ticket.Description,
+                    OutputText = summary,
                     CreatedAt = DateTime.UtcNow,
                     IsSuccess = true
                 });
 
                 await _db.SaveChangesAsync();
 
-                return result;
+                return new TicketSummaryResponse
+                {
+                    TicketId = ticket.Id,
+                    CustomerName = ticket.CustomerName,
+                    Subject = ticket.Subject,
+                    Summary = summary
+                };
             }
             catch (Exception ex)
             {
                 _db.RequestLogs.Add(new RequestLog
                 {
-                    InputText = ticket,
+                    InputText = ticket.Description,
                     OutputText = ex.ToString(),
                     CreatedAt = DateTime.UtcNow,
                     IsSuccess = false
