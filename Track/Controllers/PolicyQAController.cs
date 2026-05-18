@@ -1,32 +1,41 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Track.DTO;
 using Track.Services;
 
-namespace Track.Controllers
+[ApiController]
+
+[Route("api/policy")]
+//[AllowAnonymous]
+public class PolicyQAController : ControllerBase
 {
-    [ApiController]
-    [Route("api/policy")]
-    public class PolicyQAController : ControllerBase
+    private readonly IPolicyQAService _service;
+
+    public PolicyQAController(IPolicyQAService service)
     {
-        private readonly IPolicyQAService _service;
+        _service = service;
+    }
 
-        public PolicyQAController(IPolicyQAService service)
-        {
-            _service = service;
-        }
+    [Authorize(Roles = "SupportAgent")]
+    [HttpPost("upload")]
+    public async Task<IActionResult> Upload(IFormFile file)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest("Please provide a valid document.");
 
-        [HttpPost("upload")]
-        public async Task<IActionResult> Upload(IFormFile file)
-        {
-            await _service.UploadDocumentAsync(file);
-            return Ok("Document uploaded successfully.");
-        }
+        await _service.UploadDocumentAsync(file);
+        return Ok(new { message = "Document uploaded successfully." });
+    }
 
-        [HttpPost("ask")]
-        public async Task<IActionResult> Ask([FromBody] AskRequest request)
-        {
-            var result = await _service.AskAsync(request.Query);
-            return Ok(result);
-        }
+    [Authorize] // Any authenticated user (Customer or Agent)
+    [HttpPost("ask")]
+    public async Task<IActionResult> Ask([FromBody] AskRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Query))
+            return BadRequest("Query cannot be empty.");
+
+        var result = await _service.AskAsync(request.Query);
+        return Ok(new { answer = result });
     }
 }

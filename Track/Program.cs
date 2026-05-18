@@ -1,69 +1,222 @@
+using Asp.Versioning;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.Text;
 using Track.AI;
 using Track.Data;
 using Track.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// DB
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// Controllers
+
+// =========================
+// DATABASE
+// =========================
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("Default")));
+
+
+
+// =========================
+// JWT AUTHENTICATION
+// =========================
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+
+                ValidateAudience = true,
+
+                ValidateLifetime = true,
+
+                ValidateIssuerSigningKey = true,
+
+                ValidIssuer =
+                    builder.Configuration["Jwt:Issuer"],
+
+                ValidAudience =
+                    builder.Configuration["Jwt:Audience"],
+
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(
+                            builder.Configuration["Jwt:Key"]!
+                        )),
+                RoleClaimType = ClaimTypes.Role
+
+            };
+    });
+
+
+
+// =========================
+// AUTHORIZATION
+// =========================
+builder.Services.AddAuthorization();
+
+
+
+// =========================
+// CONTROLLERS
+// =========================
 builder.Services.AddControllers();
 
-// Swagger
+
+
+// =========================
+// SWAGGER
+// =========================
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// HttpClient
+
+
+// =========================
+// HTTP CLIENT
+// =========================
 builder.Services.AddHttpClient();
 
-// AI + RAG
+
+
+// =========================
+// AI SERVICES
+// =========================
 builder.Services.AddScoped<IAIClient, GeminiClient>();
+
 builder.Services.AddScoped<IEmbeddingClient, EmbeddingClient>();
 
-// Services
-builder.Services.AddScoped<IPolicyQAService, PolicyQAService>();
-builder.Services.AddScoped<TicketService>();
-builder.Services.AddScoped<DataSeeder>();
 
-// Recommendation services
+
+// =========================
+// APPLICATION SERVICES
+// =========================
+builder.Services.AddScoped<JwtService>();
+
+builder.Services.AddScoped<IPolicyQAService, PolicyQAService>();
+
+builder.Services.AddScoped<TicketService>();
+
 builder.Services.AddScoped<RecommendationService>();
+
 builder.Services.AddScoped<EmbeddingBuilderService>();
 
+
+//Api versioining
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = false;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+})
+    .AddMvc();
 var app = builder.Build();
 
-// Seed DB
+
+
+// =========================
+// APPLY MIGRATIONS + SEED DATA
+// =========================
 using (var scope = app.Services.CreateScope())
 {
     try
     {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var db = scope.ServiceProvider
+            .GetRequiredService<AppDbContext>();
+
+        // Create DB + Apply Migrations
         db.Database.Migrate();
 
-        var seeder = scope.ServiceProvider.GetRequiredService<DataSeeder>();
-        await seeder.SeedAsync();
+        // Seed Initial Data
+        await DataSeeder.SeedAsync(db);
 
-        var embeddingBuilder = scope.ServiceProvider.GetRequiredService<EmbeddingBuilderService>();
+        // Build Product Embeddings
+        var embeddingBuilder = scope.ServiceProvider
+            .GetRequiredService<EmbeddingBuilderService>();
+
         await embeddingBuilder.BuildAsync();
     }
     catch (Exception ex)
     {
-        Console.WriteLine("Seeding failed: " + ex.ToString());
+        Console.WriteLine("Seeding failed:");
+        Console.WriteLine(ex.ToString());
+    }
+}
+//Admin Seeder
+using (var scope = app.Services.CreateScope())
+{
+    try
+    {
+        var db = scope.ServiceProvider
+            .GetRequiredService<AppDbContext>();
+
+        // Apply migrations
+        db.Database.Migrate();
+
+        // Seed products + transactions
+        await DataSeeder.SeedAsync(db);
+
+        // Seed admin
+        AdminSeeder.SeedAdmin(db);
+
+        // Build embeddings
+        var embeddingBuilder = scope.ServiceProvider
+            .GetRequiredService<EmbeddingBuilderService>();
+
+        await embeddingBuilder.BuildAsync();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
     }
 }
 
+
+
+// =========================
+// MIDDLEWARE
+// =========================
 app.UseHttpsRedirection();
 
+
+
+// =========================
+// SWAGGER UI
+// =========================
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+
     app.UseSwaggerUI();
 }
 
+
+
+// =========================
+// AUTHENTICATION + AUTHORIZATION
+// =========================
+app.UseAuthentication();
+
 app.UseAuthorization();
 
+
+
+// =========================
+// MAP CONTROLLERS
+// =========================
 app.MapControllers();
 
+
+
+// =========================
+// RUN APPLICATION
+// =========================
 app.Run();

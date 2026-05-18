@@ -70,7 +70,7 @@ namespace Track.Services
                     CreatedAt = DateTime.UtcNow,
                     IsSuccess = true
                 });
-
+                ticket.Status = "Reviewed";
                 await _db.SaveChangesAsync();
 
                 return new TicketSummaryResponse
@@ -95,6 +95,53 @@ namespace Track.Services
 
                 throw;
             }
+        }
+        //Get Ticket By ID
+        public async Task<Ticket?> GetTicketByIdAsync(int id, string username, string role)
+        {
+            var ticket = await _db.Tickets.FindAsync(id);
+
+            if (ticket == null)
+                return null;
+
+            // Admin & SupportAgent can see everything
+            if (role == "Admin" || role == "SupportAgent")
+                return ticket;
+
+            // Customer can only see their own ticket
+            if (role == "Customer" && ticket.CustomerName == username)
+                return ticket;
+
+            // Not allowed
+            return null;
+        }
+        //delete ticket by id
+        public async Task<bool> DeleteTicketAsync(int id)
+        {
+            var ticket = await _db.Tickets.FindAsync(id);
+
+            if (ticket == null)
+                return false;
+
+            _db.Tickets.Remove(ticket);
+            await _db.SaveChangesAsync();
+
+            return true;
+        }
+        // get ticket by status 
+        public async Task<List<Ticket>> GetTicketsByStatusAsync(string status)
+        {
+            return await _db.Tickets
+                .Where(t => t.Status.ToLower() == status.ToLower())
+                .ToListAsync();
+        }
+
+        //get my tickets
+        public async Task<List<Ticket>> GetMyTicketsAsync(string customerName)
+        {
+            return await _db.Tickets
+                .Where(t => t.CustomerName == customerName)
+                .ToListAsync();
         }
     }
 }

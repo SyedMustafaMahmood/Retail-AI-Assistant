@@ -10,3 +10,4 @@ Your response should be:
 - Specific to what they already have in their cart
 - Highlight how it complements their existing items
 - Under 50 words
+- use less tokens

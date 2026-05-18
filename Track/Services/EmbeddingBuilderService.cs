@@ -3,7 +3,6 @@ using Track.Helpers;
 using Track.AI;
 using Track.Data;
 using Track.Models;
-
 namespace Track.Services
 {
     public class EmbeddingBuilderService

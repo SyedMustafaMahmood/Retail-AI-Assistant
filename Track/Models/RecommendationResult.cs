@@ -11,5 +11,7 @@
         public double FinalScore { get; set; }
 
         public string Reason { get; set; }
+        internal float[] Embedding { get; set; }
+
     }
 }

@@ -16,6 +16,10 @@ namespace Track.Data
         public DbSet<TransactionItem> TransactionItems { get; set; }
         public DbSet<EmbeddingMetadata> Embeddings { get; set; }
         public DbSet<RecommendationLog> RecommendationLogs { get; set; }
+
+        public DbSet<User> Users { get; set; }
+
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
         public AppDbContext(DbContextOptions<AppDbContext> options)
             : base(options)
         {
