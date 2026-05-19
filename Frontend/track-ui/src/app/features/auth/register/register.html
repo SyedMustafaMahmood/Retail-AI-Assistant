@@ -1,0 +1,74 @@
+<div class="login-container">
+  <div class="left-panel">
+    <div class="brand">
+        <div class="logo-circle">
+            AI
+        </div>
+
+        <div>
+            <h1>E3 Retail</h1>
+            <p>Retail AI Assistant</p>
+        </div>
+   </div>
+    <div class="tagline">
+      <h2>Retail,<br>made <span>smarter.</span></h2>
+      <p>Shop smarter. Get help faster. Powered by AI.</p>
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="right-panel-inner">
+        <h3>Create account</h3>
+        <p class="subtitle">Join E3 Retail to get started</p>
+
+        <form (ngSubmit)="onSubmit()" [formGroup]="registerForm">
+        <div class="field">
+            <label>Name</label>
+            <input type="text" formControlName="name" placeholder="John Doe"/>
+            <div class="error-msg"
+            *ngIf="registerForm.get('name')?.touched && registerForm.get('name')?.hasError('required')">
+            Name is required
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Email</label>
+            <input type="email" formControlName="email" placeholder="you@example.com"/>
+            <div class="error-msg"
+            *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.hasError('required')">
+            Email is required
+            </div>
+            <div class="error-msg"
+            *ngIf="registerForm.get('email')?.touched && registerForm.get('email')?.hasError('email')">
+            Enter a valid email
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Password</label>
+            <input type="password" formControlName="password" placeholder="••••••••"/>
+            <div class="error-msg"
+            *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.hasError('required')">
+            Password is required
+            </div>
+            <div class="error-msg"
+            *ngIf="registerForm.get('password')?.touched && registerForm.get('password')?.hasError('minlength')">
+            Minimum 6 characters
+            </div>
+        </div>
+
+        <button class="login-btn" type="submit" [disabled]="registerForm.invalid || isLoading">
+            <span class="spinner" *ngIf="isLoading"></span>
+            <span *ngIf="!isLoading">Create Account →</span>
+        </button>
+        </form>
+
+        <div class="divider"></div>
+
+        <p class="register-link">
+        Already have an account?
+        <a (click)="goToLogin()">Sign in</a>
+        </p>
+    </div>
+  </div>
+</div>

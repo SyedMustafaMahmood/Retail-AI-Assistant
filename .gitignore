@@ -363,3 +363,12 @@ MigrationBackup/
 FodyWeavers.xsdappsettings.json
 appsettings.Development.json
 appsettings.json
+
+
+Frontend/node_modules/
+Frontend/track-ui/node_modules/
+Frontend/track-ui/dist/
+Frontend/track-ui/.angular/
+
+Track/appsettings.json
+Track/appsettings.Development.json

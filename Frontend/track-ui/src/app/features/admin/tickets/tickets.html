@@ -1,0 +1,108 @@
+<!-- Same as staff tickets.html
+     Just change nav-subtitle to "Admin Portal"
+     and nav-links to point to /admin/policy -->
+<div class="page">
+  <nav class="navbar">
+    <div class="nav-brand">
+      <h1>E3 Retail</h1>
+      <span class="nav-subtitle">Admin Portal</span>
+    </div>
+    <div class="nav-links">
+      <a class="active">Tickets</a>
+      <a (click)="goToPolicy()">Policy & Documents</a>
+    </div>
+    <div class="nav-user" *ngIf="currentUser">
+      <span class="user-name">{{ currentUser.name }}</span>
+      <span class="user-role">{{ currentUser.role }}</span>
+      <button class="logout-btn" (click)="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="ticket-list-panel">
+      <div class="panel-header">
+        <h2>All Tickets</h2>
+        <p class="page-subtitle">{{ filteredTickets.length }} ticket(s)</p>
+      </div>
+      <div class="filter-tabs">
+        <button
+          *ngFor="let status of statuses"
+          class="filter-tab"
+          [class.active]="filterStatus === status"
+          (click)="setFilter(status)"
+        >{{ status }}</button>
+      </div>
+      <div class="loading" *ngIf="isLoadingTickets">
+        <div class="spinner"></div><p>Loading tickets...</p>
+      </div>
+      <div class="empty-state" *ngIf="!isLoadingTickets && filteredTickets.length === 0">
+        <p>No tickets found.</p>
+      </div>
+      <div class="tickets-scroll">
+        <div
+          class="ticket-item"
+          *ngFor="let ticket of filteredTickets"
+          [class.selected]="selectedTicket?.id === ticket.id"
+          (click)="selectTicket(ticket)"
+        >
+          <div class="ticket-item-header">
+            <span class="ticket-id">#{{ ticket.id }}</span>
+            <span [class]="'status-badge ' + getStatusClass(ticket.status)">{{ ticket.status }}</span>
+          </div>
+          <p class="ticket-subject">{{ ticket.subject }}</p>
+          <p class="ticket-customer">{{ ticket.customerName }}</p>
+          <p class="ticket-date">{{ ticket.createdAt | date: 'MMM d, y' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ticket-detail-panel">
+      <div class="empty-detail" *ngIf="!selectedTicket">
+        <div class="empty-icon">🎫</div>
+        <h3>Select a ticket</h3>
+        <p>Click on a ticket to view details and summarize</p>
+      </div>
+
+      <div *ngIf="selectedTicket">
+        <div class="detail-header">
+          <div class="detail-meta">
+            <span class="ticket-id">#{{ selectedTicket.id }}</span>
+            <span [class]="'status-badge ' + getStatusClass(selectedTicket.status)">{{ selectedTicket.status }}</span>
+          </div>
+          <h2 class="detail-subject">{{ selectedTicket.subject }}</h2>
+          <p class="detail-customer">From: {{ selectedTicket.customerName }} · {{ selectedTicket.createdAt | date: 'MMM d, y' }}</p>
+        </div>
+
+        <div class="detail-section">
+          <h4>Description</h4>
+          <p class="detail-description">{{ selectedTicket.description }}</p>
+        </div>
+
+        <div class="detail-actions">
+          <button class="primary-btn" (click)="summarize()" [disabled]="isSummarizing">
+            <span class="spinner-sm" *ngIf="isSummarizing"></span>
+            <span *ngIf="!isSummarizing">✦ Summarize with AI</span>
+          </button>
+          <div class="status-actions">
+            <span class="status-label">Change status:</span>
+            <button class="status-btn" (click)="updateStatus('Open')" [disabled]="selectedTicket.status === 'Open' || isUpdatingStatus">Open</button>
+            <button class="status-btn" (click)="updateStatus('InProgress')" [disabled]="selectedTicket.status === 'InProgress' || isUpdatingStatus">In Progress</button>
+            <button class="status-btn" (click)="updateStatus('Resolved')" [disabled]="selectedTicket.status === 'Resolved' || isUpdatingStatus">Resolved</button>
+          </div>
+        </div>
+
+        <div class="summary-card" *ngIf="summary">
+          <div class="summary-header">
+            <span class="summary-label">✦ AI Summary</span>
+          </div>
+          <p class="summary-text">{{ summary.summary }}</p>
+        </div>
+
+        <div class="loading" *ngIf="isSummarizing">
+          <div class="spinner"></div>
+          <p>Generating AI summary...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

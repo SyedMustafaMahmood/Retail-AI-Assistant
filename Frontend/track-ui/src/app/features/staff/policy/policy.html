@@ -1,0 +1,74 @@
+<div class="page">
+
+  <nav class="navbar">
+    <div class="nav-brand">
+      <h1>E3 Retail</h1>
+      <span class="nav-subtitle">Staff Portal</span>
+    </div>
+    <div class="nav-links">
+      <a (click)="goToTickets()">Tickets</a>
+      <a class="active">Policy Assistant</a>
+    </div>
+    <div class="nav-user" *ngIf="currentUser">
+      <span class="user-name">{{ currentUser.name }}</span>
+      <span class="user-role">{{ currentUser.role }}</span>
+      <button class="logout-btn" (click)="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="content">
+    <div class="page-header">
+      <h2>Policy Assistant</h2>
+      <p class="page-subtitle">Ask about customer and internal policies to assist with tickets</p>
+    </div>
+
+    <div class="chat-container">
+      <div class="messages-area">
+        <div
+          class="message"
+          *ngFor="let message of messages"
+          [class.user-message]="message.role === 'user'"
+          [class.assistant-message]="message.role === 'assistant'"
+        >
+          <div class="message-bubble">
+            <p>{{ message.text }}</p>
+          </div>
+          <span class="message-label">
+            {{ message.role === 'user' ? 'You' : 'Aria' }}
+          </span>
+        </div>
+
+        <div class="message assistant-message" *ngIf="isLoading">
+          <div class="message-bubble typing">
+            <span></span><span></span><span></span>
+          </div>
+          <span class="message-label">Aria</span>
+        </div>
+      </div>
+
+      <div class="input-area">
+        <textarea
+          [(ngModel)]="query"
+          (keydown)="onKeyPress($event)"
+          placeholder="Ask about customer or internal policies..."
+          rows="1"
+        ></textarea>
+        <button
+          class="send-btn"
+          (click)="askQuestion()"
+          [disabled]="!query.trim() || isLoading"
+        >→</button>
+      </div>
+    </div>
+
+    <div class="quick-questions">
+      <p class="quick-label">Quick questions:</p>
+      <div class="quick-btns">
+        <button class="quick-btn" (click)="query = 'What is the refund policy?'">Refund policy</button>
+        <button class="quick-btn" (click)="query = 'How many days to return a product?'">Return window</button>
+        <button class="quick-btn" (click)="query = 'What is the escalation process?'">Escalation process</button>
+        <button class="quick-btn" (click)="query = 'What are the SLA guidelines?'">SLA guidelines</button>
+      </div>
+    </div>
+  </div>
+</div>

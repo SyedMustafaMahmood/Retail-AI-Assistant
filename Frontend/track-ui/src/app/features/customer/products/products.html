@@ -1,0 +1,159 @@
+<div class="page">
+
+  <nav class="navbar">
+
+  <div class="nav-left">
+
+    <div class="logo-circle">
+      AI
+    </div>
+
+    <div class="nav-brand">
+      <h1>E3 Retail</h1>
+      <span class="nav-subtitle">Retail AI Assistant</span>
+    </div>
+
+  </div>
+
+  <div class="nav-links">
+    <a (click)="goToTickets()">My Tickets</a>
+    <a (click)="goToPolicy()">Policy Help</a>
+  </div>
+
+  <div class="nav-user" *ngIf="currentUser">
+
+    <div class="user-avatar">
+      {{ currentUser.name[0] }}
+    </div>
+
+    <div class="user-meta">
+      <span class="user-name">{{ currentUser.name }}</span>
+      <span class="user-role">{{ currentUser.role }}</span>
+    </div>
+
+    <button class="logout-btn" (click)="logout()">
+      Sign out
+    </button>
+
+  </div>
+
+</nav>
+
+  <div class="content">
+
+    <!-- Left: Products + Cart -->
+    <div class="main">
+
+      <!-- Products Section -->
+      <section class="section">
+        <div class="section-header">
+          <h2>Products</h2>
+          <p class="section-subtitle">Browse our collection</p>
+        </div>
+
+        <div class="loading" *ngIf="isLoadingProducts">
+          <div class="spinner"></div>
+          <p>Loading products...</p>
+        </div>
+
+        <div class="products-grid" *ngIf="!isLoadingProducts">
+          <div
+            class="product-card"
+            *ngFor="let product of products"
+            [class.in-cart]="isInCart(product)"
+          >
+            <div class="product-icon">{{ product.name[0] }}</div>
+            <div class="product-info">
+              <h3>{{ product.name }}</h3>
+              <p>{{ product.description }}</p>
+            </div>
+            <button
+              class="cart-btn"
+              (click)="addToCart(product)"
+              *ngIf="!isInCart(product)"
+            >
+              Add to Cart
+            </button>
+            <button
+              class="cart-btn added"
+              (click)="removeFromCart(product)"
+              *ngIf="isInCart(product)"
+            >
+              ✓ Added
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cart Section -->
+      <section class="section" *ngIf="cart.length > 0">
+        <div class="section-header">
+          <h2>Your Cart</h2>
+          <p class="section-subtitle">{{ cart.length }} item(s)</p>
+        </div>
+
+        <div class="cart-list">
+          <div class="cart-item" *ngFor="let item of cart">
+            <div class="cart-item-info">
+              <span class="cart-item-name">{{ item.name }}</span>
+              <span class="cart-item-desc">{{ item.description }}</span>
+            </div>
+            <button class="remove-btn" (click)="removeFromCart(item)">
+              Remove
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Right: Recommendations -->
+    <div class="sidebar" *ngIf="cart.length > 0">
+      <div class="section-header">
+        <h2>You might also like</h2>
+        <p class="section-subtitle">Based on your cart</p>
+      </div>
+
+      <div class="loading" *ngIf="isLoadingRecommendations">
+        <div class="spinner"></div>
+        <p>Finding recommendations...</p>
+      </div>
+
+      <div
+        class="recommendation-card"
+        *ngFor="let rec of recommendations"
+      >
+        <div class="rec-header">
+          <div class="product-icon small">{{ rec.product[0] }}</div>
+          <h3>{{ rec.product }}</h3>
+        </div>
+        <p class="rec-reason">{{ rec.reason }}</p>
+        <div class="rec-scores">
+          <span class="score">
+            <span class="score-label">Match</span>
+            <span class="score-value">{{ (rec.finalScore * 100).toFixed(0) }}%</span>
+          </span>
+          <span class="score">
+            <span class="score-label">Confidence</span>
+            <span class="score-value">{{ rec.confidence }}</span>
+          </span>
+        </div>
+        <button
+          class="cart-btn"
+          (click)="addToCart({ id: 0, name: rec.product, description: '' })"
+          [disabled]="isInCart({ id: 0, name: rec.product, description: '' })"
+        >
+          {{ isInCart({ id: 0, name: rec.product, description: '' }) ? '✓ Added' : 'Add to Cart' }}
+        </button>
+      </div>
+
+      <div
+        class="empty-rec"
+        *ngIf="!isLoadingRecommendations && recommendations.length === 0"
+      >
+        <p>No recommendations found.</p>
+      </div>
+    </div>
+
+  </div>
+</div>

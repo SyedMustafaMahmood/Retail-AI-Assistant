@@ -1,0 +1,85 @@
+<div class="login-container">
+
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <div class="brand">
+
+        <div class="logo-circle">
+            AI
+        </div>
+
+        <div>
+            <h1>E3 Retail</h1>
+            <p>Retail AI Assistant</p>
+        </div>
+
+    </div>
+
+    <div class="tagline">
+        <h2>Retail,<br>made <span>smarter.</span></h2>
+        <p>Shop smarter. Get help faster. Powered by AI.</p>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    <div class="right-panel-inner">
+        <h3>Welcome back</h3>
+        <p class="subtitle">Sign in to your account to continue</p>
+
+        <form (ngSubmit)="onSubmit()" [formGroup]="loginForm">
+
+        <div class="field">
+            <label>Email</label>
+            <input
+            type="email"
+            formControlName="email"
+            placeholder="you@example.com"
+            />
+            <div class="error-msg"
+            *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.hasError('required')">
+            Email is required
+            </div>
+            <div class="error-msg"
+            *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.hasError('email')">
+            Enter a valid email
+            </div>
+        </div>
+
+        <div class="field">
+            <label>Password</label>
+            <input
+            type="password"
+            formControlName="password"
+            placeholder="••••••••"
+            />
+            <div class="error-msg"
+            *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.hasError('required')">
+            Password is required
+            </div>
+            <div class="error-msg"
+            *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.hasError('minlength')">
+            Minimum 6 characters
+            </div>
+        </div>
+
+        <button
+            class="login-btn"
+            type="submit"
+            [disabled]="loginForm.invalid || isLoading"
+        >
+            <span class="spinner" *ngIf="isLoading"></span>
+            <span *ngIf="!isLoading">Sign In →</span>
+        </button>
+
+        </form>
+
+        <div class="divider"></div>
+
+        <p class="register-link">
+        Don't have an account?
+        <a (click)="goToRegister()">Create one</a>
+        </p>
+    </div>
+  </div>
+</div>

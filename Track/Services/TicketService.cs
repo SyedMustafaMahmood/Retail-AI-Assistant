@@ -143,5 +143,19 @@ namespace Track.Services
                 .Where(t => t.CustomerName == customerName)
                 .ToListAsync();
         }
+
+        // Update ticket status
+        public async Task<bool> UpdateTicketStatusAsync(int id, string status)
+        {
+            var ticket = await _db.Tickets.FindAsync(id);
+
+            if (ticket == null)
+                return false;
+
+            ticket.Status = status;
+            await _db.SaveChangesAsync();
+
+            return true;
+        }
     }
 }

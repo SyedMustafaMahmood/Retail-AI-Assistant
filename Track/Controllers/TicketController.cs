@@ -34,7 +34,7 @@ namespace Track.Controllers
             var tickets = await _service.GetAllTicketsAsync();
             return Ok(tickets);
         }
-        [Authorize(Roles = "SupportAgent")]
+        [Authorize(Roles = "SupportAgent,Admin")]
         [HttpPost("{id}/summarize")]
         public async Task<IActionResult> Summarize(int id)
         {
@@ -88,6 +88,17 @@ namespace Track.Controllers
             var tickets = await _service.GetMyTicketsAsync(username!);
 
             return Ok(tickets);
+        }
+
+        
+        [Authorize(Roles = "SupportAgent,Admin")]
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateStatusRequest request)
+        {
+            var result = await _service.UpdateTicketStatusAsync(id, request.Status);
+            if (!result)
+                return NotFound($"Ticket with ID {id} not found.");
+            return Ok("Status updated successfully.");
         }
     }
 }

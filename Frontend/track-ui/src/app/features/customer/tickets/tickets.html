@@ -1,0 +1,111 @@
+<div class="page">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <h1>E3 Retail</h1>
+      <span class="nav-subtitle">Retail AI Assistant</span>
+    </div>
+
+    <div class="nav-links">
+      <a (click)="goToProducts()">Products</a>
+      <a class="active">My Tickets</a>
+      <a (click)="goToPolicy()">Policy Help</a>
+    </div>
+
+    <div class="nav-user" *ngIf="currentUser">
+      <span class="user-name">{{ currentUser.name }}</span>
+      <span class="user-role">{{ currentUser.role }}</span>
+      <button class="logout-btn" (click)="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h2>My Tickets</h2>
+        <p class="page-subtitle">View and manage your support requests</p>
+      </div>
+      <button class="primary-btn" (click)="showForm = !showForm">
+        {{ showForm ? 'Cancel' : '+ New Ticket' }}
+      </button>
+    </div>
+
+    <!-- New Ticket Form -->
+    <div class="form-card" *ngIf="showForm">
+      <h3>Raise a Support Ticket</h3>
+      <p class="form-subtitle">Describe your issue and we'll get back to you</p>
+
+      <div class="field">
+        <label>Subject</label>
+        <input
+          type="text"
+          [(ngModel)]="newTicket.subject"
+          placeholder="Brief summary of your issue"
+        />
+      </div>
+
+      <div class="field">
+        <label>Description</label>
+        <textarea
+          [(ngModel)]="newTicket.description"
+          placeholder="Describe your issue in detail..."
+          rows="4"
+        ></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button
+          class="primary-btn"
+          (click)="submitTicket()"
+          [disabled]="!newTicket.subject || !newTicket.description || isSubmitting"
+        >
+          <span class="spinner" *ngIf="isSubmitting"></span>
+          <span *ngIf="!isSubmitting">Submit Ticket</span>
+        </button>
+        <button class="secondary-btn" (click)="showForm = false">
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" *ngIf="isLoadingTickets">
+      <div class="spinner"></div>
+      <p>Loading your tickets...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoadingTickets && tickets.length === 0 && !showForm">
+      <div class="empty-icon">🎫</div>
+      <h3>No tickets yet</h3>
+      <p>Raise a support ticket and we'll help you out.</p>
+      <button class="primary-btn" (click)="showForm = true">
+        + New Ticket
+      </button>
+    </div>
+
+    <!-- Tickets List -->
+    <div class="tickets-list" *ngIf="!isLoadingTickets && tickets.length > 0">
+      <div class="ticket-card" *ngFor="let ticket of tickets">
+        <div class="ticket-header">
+          <div class="ticket-meta">
+            <span class="ticket-id">#{{ ticket.id }}</span>
+            <span [class]="'status-badge ' + getStatusClass(ticket.status)">
+              {{ ticket.status }}
+            </span>
+          </div>
+          <span class="ticket-date">
+            {{ ticket.createdAt | date: 'MMM d, y' }}
+          </span>
+        </div>
+
+        <h3 class="ticket-subject">{{ ticket.subject }}</h3>
+        <p class="ticket-description">{{ ticket.description }}</p>
+      </div>
+    </div>
+
+  </div>
+</div>
