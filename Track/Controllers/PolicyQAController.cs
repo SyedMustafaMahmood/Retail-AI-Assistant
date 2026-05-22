@@ -16,7 +16,7 @@ public class PolicyQAController : ControllerBase
         _service = service;
     }
 
-    [Authorize(Roles = "SupportAgent")]
+    [Authorize(Roles = "SupportAgent,Admin")]
     [HttpPost("upload")]
     public async Task<IActionResult> Upload(IFormFile file)
     {
