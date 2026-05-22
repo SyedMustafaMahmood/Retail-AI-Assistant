@@ -1,0 +1,129 @@
+<div class="page">
+
+  <nav class="navbar">
+    <div class="nav-brand">
+      <h1>E3 Retail</h1>
+      <span class="nav-subtitle">Admin Portal</span>
+    </div>
+    <div class="nav-links">
+      <a (click)="goToTickets()">Tickets</a>
+      <a class="active">Policy & Documents</a>
+    </div>
+    <div class="nav-user" *ngIf="currentUser">
+      <span class="user-name">{{ currentUser.name }}</span>
+      <span class="user-role">{{ currentUser.role }}</span>
+      <button class="logout-btn" (click)="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <div class="page-header">
+      <h2>Policy & Documents</h2>
+      <p class="page-subtitle">Upload policy documents and ask questions</p>
+    </div>
+
+    <div class="two-col">
+
+      <!-- Left: Upload + Chat -->
+      <div class="main-col">
+
+        <!-- Upload Section -->
+        <div class="upload-card">
+          <h3>Upload Policy Document</h3>
+          <p class="upload-subtitle">Upload a .txt or .md file to update policy knowledge</p>
+
+          <div class="upload-area">
+            <input
+              type="file"
+              id="fileInput"
+              accept=".txt,.md"
+              (change)="onFileSelected($event)"
+              style="display:none"
+            />
+            <label for="fileInput" class="file-label">
+              <span *ngIf="!selectedFile">📄 Choose a file</span>
+              <span *ngIf="selectedFile">📄 {{ selectedFile.name }}</span>
+            </label>
+            <button
+              class="upload-btn"
+              (click)="uploadDocument()"
+              [disabled]="!selectedFile || isUploading"
+            >
+              <span class="spinner-sm" *ngIf="isUploading"></span>
+              <span *ngIf="!isUploading">Upload</span>
+            </button>
+          </div>
+
+          <div class="upload-success" *ngIf="uploadSuccess">
+            ✓ Document uploaded successfully!
+          </div>
+        </div>
+
+        <!-- Chat -->
+        <div class="chat-container">
+          <div class="messages-area">
+            <div
+              class="message"
+              *ngFor="let message of messages"
+              [class.user-message]="message.role === 'user'"
+              [class.assistant-message]="message.role === 'assistant'"
+            >
+              <div class="message-bubble">
+                <p>{{ message.text }}</p>
+              </div>
+              <span class="message-label">
+                {{ message.role === 'user' ? 'You' : 'Aria' }}
+              </span>
+            </div>
+
+            <div class="message assistant-message" *ngIf="isLoading">
+              <div class="message-bubble typing">
+                <span></span><span></span><span></span>
+              </div>
+              <span class="message-label">Aria</span>
+            </div>
+          </div>
+
+          <div class="input-area">
+            <textarea
+              [(ngModel)]="query"
+              (keydown)="onKeyPress($event)"
+              placeholder="Ask about uploaded policy documents..."
+              rows="1"
+            ></textarea>
+            <button
+              class="send-btn"
+              (click)="askQuestion()"
+              [disabled]="!query.trim() || isLoading"
+            >→</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Tips -->
+      <div class="tips-col">
+        <div class="tips-card">
+          <h4>📋 Upload Tips</h4>
+          <ul>
+            <li>Use <strong>.txt</strong> or <strong>.md</strong> format</li>
+            <li>Separate customer and staff policies into different files</li>
+            <li>Latest uploaded document is used for answers</li>
+            <li>Keep policies clear and well structured</li>
+          </ul>
+        </div>
+
+        <div class="tips-card">
+          <h4>💬 Quick Questions</h4>
+          <div class="quick-btns">
+            <button class="quick-btn" (click)="query = 'What is the refund policy?'">Refund policy</button>
+            <button class="quick-btn" (click)="query = 'What is the return window?'">Return window</button>
+            <button class="quick-btn" (click)="query = 'What is the escalation process?'">Escalation process</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

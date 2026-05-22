@@ -7,8 +7,7 @@ namespace Track.Controllers
 {
     [ApiController]
     [Route("api/recommend")]
-    [Authorize(Roles = "SupportAgent")]
-
+    [Authorize]
     public class RecommendationController : ControllerBase
     {
         private readonly RecommendationService _service;

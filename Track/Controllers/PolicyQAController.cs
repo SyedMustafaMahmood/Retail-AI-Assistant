@@ -5,9 +5,8 @@ using Track.DTO;
 using Track.Services;
 
 [ApiController]
-
 [Route("api/policy")]
-//[AllowAnonymous]
+
 public class PolicyQAController : ControllerBase
 {
     private readonly IPolicyQAService _service;
@@ -28,7 +27,7 @@ public class PolicyQAController : ControllerBase
         return Ok(new { message = "Document uploaded successfully." });
     }
 
-    [Authorize] // Any authenticated user (Customer or Agent)
+   [Authorize] // Any authenticated user (Customer or Agent)
     [HttpPost("ask")]
     public async Task<IActionResult> Ask([FromBody] AskRequest request)
     {

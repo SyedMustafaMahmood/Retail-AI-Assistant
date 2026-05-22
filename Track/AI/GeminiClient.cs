@@ -66,5 +66,90 @@ namespace Track.AI
 
             return text ?? "No response from Gemini";
         }
+        public async IAsyncEnumerable<string> GetCompletionStreamAsync(string prompt)
+        {
+            var apiKey = _config["Gemini:ApiKey"];
+
+            var url =
+                $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key={apiKey}";
+
+            var body = new
+            {
+                contents = new[]
+                {
+            new
+            {
+                parts = new[]
+                {
+                    new { text = prompt }
+                }
+            }
+        }
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new StringContent(
+                    JsonSerializer.Serialize(body),
+                    Encoding.UTF8,
+                    "application/json")
+            };
+
+            var response = await _httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+
+                throw new Exception(
+                    $"Gemini Streaming Error ({response.StatusCode}): {error}");
+            }
+
+            var stream = await response.Content.ReadAsStreamAsync();
+
+            using var reader = new StreamReader(stream);
+
+            while (!reader.EndOfStream)
+            {
+                var line = await reader.ReadLineAsync();
+
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                if (!line.StartsWith("data: "))
+                    continue;
+
+                var json = line.Substring(6);
+
+                string? text = null;
+
+                try
+                {
+                    using var doc = JsonDocument.Parse(json);
+
+                    var root = doc.RootElement;
+
+                    if (!root.TryGetProperty("candidates", out var candidates))
+                        continue;
+
+                    text = candidates[0]
+                        .GetProperty("content")
+                        .GetProperty("parts")[0]
+                        .GetProperty("text")
+                        .GetString();
+                }
+                catch
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrEmpty(text))
+                {
+                    yield return text;
+                }
+            }
+        }
     }
 }

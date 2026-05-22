@@ -1,0 +1,579 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:host {
+  display: block;
+  min-height: 100vh;
+
+  font-family: 'Inter', sans-serif;
+
+  background:
+    radial-gradient(circle at top left, #f5f7ff 0%, transparent 30%),
+    radial-gradient(circle at bottom right, #eef2ff 0%, transparent 25%),
+    linear-gradient(to bottom right, #fafafa, #f4f6f8);
+}
+
+/* =========================
+   Navbar
+========================= */
+
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 1.2rem 2.5rem;
+
+  background: rgba(255,255,255,0.78);
+
+  backdrop-filter: blur(16px);
+
+  border-bottom: 1px solid rgba(255,255,255,0.7);
+
+  box-shadow:
+    0 4px 20px rgba(0,0,0,0.04);
+}
+
+.nav-brand h1 {
+  font-size: 1.45rem;
+  font-weight: 800;
+
+  color: #111827;
+
+  letter-spacing: -1px;
+}
+
+.nav-subtitle {
+  display: inline-block;
+
+  margin-top: 0.2rem;
+
+  font-size: 0.72rem;
+
+  color: #6b7280;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.nav-links a {
+  position: relative;
+
+  font-size: 0.92rem;
+  font-weight: 600;
+
+  color: #4b5563;
+
+  cursor: pointer;
+
+  transition: color 0.2s ease;
+}
+
+.nav-links a::after {
+  content: '';
+
+  position: absolute;
+
+  left: 0;
+  bottom: -6px;
+
+  width: 0%;
+  height: 2px;
+
+  background: #2563eb;
+
+  transition: width 0.25s ease;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  color: #111827;
+}
+
+.nav-links a:hover::after,
+.nav-links a.active::after {
+  width: 100%;
+}
+
+/* =========================
+   User
+========================= */
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+
+  color: #111827;
+}
+
+.user-role {
+  font-size: 0.72rem;
+
+  color: #2563eb;
+
+  background: #eff6ff;
+
+  padding: 0.35rem 0.8rem;
+
+  border-radius: 999px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.7px;
+
+  font-weight: 700;
+}
+
+.logout-btn {
+  border: none;
+
+  padding: 0.7rem 1rem;
+
+  border-radius: 12px;
+
+  background: #111827;
+
+  color: white;
+
+  font-size: 0.82rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.logout-btn:hover {
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 10px 20px rgba(0,0,0,0.12);
+}
+
+/* =========================
+   Content
+========================= */
+
+.content {
+  max-width: 950px;
+
+  margin: auto;
+
+  padding: 2rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* =========================
+   Header
+========================= */
+
+.page-header h2 {
+  font-size: 2rem;
+  font-weight: 800;
+
+  color: #111827;
+
+  letter-spacing: -1px;
+}
+
+.page-subtitle {
+  margin-top: 0.4rem;
+
+  color: #6b7280;
+
+  font-size: 0.92rem;
+}
+
+/* =========================
+   Chat Container
+========================= */
+
+.chat-container {
+  border-radius: 30px;
+
+  overflow: hidden;
+
+  background: rgba(255,255,255,0.78);
+
+  backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(255,255,255,0.7);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.04);
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================
+   Messages
+========================= */
+
+.messages-area {
+  padding: 1.8rem;
+
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+
+  min-height: 450px;
+  max-height: 550px;
+
+  overflow-y: auto;
+}
+
+.messages-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+.messages-area::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 999px;
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+
+  gap: 0.35rem;
+
+  max-width: 78%;
+}
+
+.user-message {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.assistant-message {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.message-bubble {
+  padding: 1rem 1.2rem;
+
+  border-radius: 20px;
+
+  font-size: 0.92rem;
+
+  line-height: 1.7;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.user-message .message-bubble {
+  background:
+    linear-gradient(
+      135deg,
+      #111827,
+      #1f2937
+    );
+
+  color: white;
+
+  border-bottom-right-radius: 6px;
+
+  box-shadow:
+    0 10px 25px rgba(17,24,39,0.16);
+}
+
+.assistant-message .message-bubble {
+  background:
+    linear-gradient(
+      to bottom right,
+      #ffffff,
+      #f8fafc
+    );
+
+  color: #111827;
+
+  border: 1px solid #edf0f3;
+
+  border-bottom-left-radius: 6px;
+}
+
+.message-label {
+  font-size: 0.72rem;
+
+  color: #9ca3af;
+
+  padding: 0 0.3rem;
+
+  font-weight: 600;
+}
+
+/* =========================
+   Typing Indicator
+========================= */
+
+.typing {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+
+  padding: 1rem 1.2rem;
+}
+
+.typing span {
+  width: 7px;
+  height: 7px;
+
+  background: #9ca3af;
+
+  border-radius: 50%;
+
+  animation: bounce 1s infinite;
+}
+
+.typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* =========================
+   Input Area
+========================= */
+
+.input-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+
+  padding: 1.3rem 1.5rem;
+
+  border-top: 1px solid #edf0f3;
+
+  background: rgba(255,255,255,0.82);
+}
+
+.input-area textarea {
+  flex: 1;
+
+  padding: 1rem 1.1rem;
+
+  border-radius: 18px;
+
+  border: 1.5px solid #e5e7eb;
+
+  background: rgba(255,255,255,0.9);
+
+  font-size: 0.92rem;
+
+  color: #111827;
+
+  font-family: inherit;
+
+  resize: none;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease;
+}
+
+.input-area textarea:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 4px rgba(37,99,235,0.12);
+
+  transform: translateY(-1px);
+}
+
+.input-area textarea::placeholder {
+  color: #9ca3af;
+}
+
+.send-btn {
+  width: 52px;
+  height: 52px;
+
+  border: none;
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #111827,
+      #1f2937
+    );
+
+  color: white;
+
+  font-size: 1.1rem;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  flex-shrink: 0;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    opacity 0.2s ease;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 12px 24px rgba(17,24,39,0.16);
+}
+
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* =========================
+   Quick Questions
+========================= */
+
+.quick-questions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  flex-wrap: wrap;
+}
+
+.quick-label {
+  font-size: 0.82rem;
+
+  color: #6b7280;
+
+  font-weight: 600;
+}
+
+.quick-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.quick-btn {
+  border: 1px solid #e5e7eb;
+
+  padding: 0.65rem 1rem;
+
+  border-radius: 999px;
+
+  background: rgba(255,255,255,0.75);
+
+  backdrop-filter: blur(10px);
+
+  color: #374151;
+
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.quick-btn:hover {
+  transform: translateY(-2px);
+
+  border-color: #2563eb;
+
+  box-shadow:
+    0 10px 20px rgba(37,99,235,0.08);
+
+  color: #111827;
+}
+
+/* =========================
+   Responsive
+========================= */
+
+@media (max-width: 768px) {
+
+  .navbar {
+    flex-direction: column;
+    gap: 1.2rem;
+
+    padding: 1.5rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+
+    flex-wrap: wrap;
+
+    justify-content: center;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .messages-area {
+    min-height: 380px;
+  }
+
+  .message {
+    max-width: 90%;
+  }
+
+  .input-area {
+    padding: 1rem;
+  }
+
+  .send-btn {
+    width: 48px;
+    height: 48px;
+  }
+}

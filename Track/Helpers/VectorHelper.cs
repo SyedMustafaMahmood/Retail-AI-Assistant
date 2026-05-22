@@ -6,6 +6,7 @@
             string vector)
         {
             return vector
+                .Trim('[',']')
                 .Split(',')
                 .Select(float.Parse)
                 .ToArray();

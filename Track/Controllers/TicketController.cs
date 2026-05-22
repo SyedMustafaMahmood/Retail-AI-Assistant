@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Track.DTO;
@@ -11,7 +12,6 @@ namespace Track.Controllers
     [Route("api/tickets")]
 
     [Authorize]
-    //[AllowAnonymous ]
     public class TicketController : ControllerBase
     {
         private readonly TicketService _service;
@@ -44,7 +44,20 @@ namespace Track.Controllers
 
             return Ok(result);
         }
-       // [Authorize]
+        [Authorize(Roles = "SupportAgent")]
+        [HttpPost("{id}/summarize-stream")]
+        public async Task SummarizeStream(int id)
+        {
+            HttpContext.Features
+                .Get<IHttpResponseBodyFeature>()?
+                .DisableBuffering();
+
+            Response.Headers.Append("Content-Type", "text/plain");
+            Response.Headers.Append("Cache-Control", "no-cache");
+
+            await _service.StreamSummaryByIdAsync(id, Response);
+        }
+        // [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTicketById(int id)
         {
@@ -78,6 +91,18 @@ namespace Track.Controllers
             var tickets = await _service.GetTicketsByStatusAsync(status);
             return Ok(tickets);
         }
+        [Authorize(Roles ="SupportAgent")]
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateTicketStatusRequest request)
+        {
+            var result = await _service.UpdateStatusAsync(id, request.Status);
+
+            if (!result)
+                return NotFound($"Ticket {id} not found");
+
+            return Ok("Status updated successfully");
+        }
+
 
         [Authorize(Roles = "Customer")]
         [HttpGet("my")]

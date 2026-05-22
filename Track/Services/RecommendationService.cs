@@ -1,74 +1,57 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Track.AI;
-using Track.Data;
+﻿using Track.AI;
 using Track.Helpers;
 using Track.Models;
+using Track.Repositories.Interfaces;
 
 namespace Track.Services
 {
     public class RecommendationService
     {
-        private readonly AppDbContext _db;
+        private readonly IProductRepository _productRepo;
+        private readonly ITransactionRepository _transactionRepo;
+        private readonly IEmbeddingRepository _embeddingRepo;
+        private readonly IRecommendationLogRepository _logRepo;
         private readonly IEmbeddingClient _embedding;
         private readonly IAIClient _ai;
 
         public RecommendationService(
-            AppDbContext db,
+            IProductRepository productRepo,
+            ITransactionRepository transactionRepo,
+            IEmbeddingRepository embeddingRepo,
+            IRecommendationLogRepository logRepo,
             IEmbeddingClient embedding,
             IAIClient ai)
         {
-            _db = db;
+            _productRepo = productRepo;
+            _transactionRepo = transactionRepo;
+            _embeddingRepo = embeddingRepo;
+            _logRepo = logRepo;
             _embedding = embedding;
             _ai = ai;
         }
 
-        public async Task<List<RecommendationResult>> RecommendAsync(
-            List<string> productNames)
+        public async Task<List<RecommendationResult>> RecommendAsync(List<string> productNames)
         {
             productNames = productNames
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
-            // -----------------------------------------
-            // STEP 1: TRY EXACT MATCH FIRST
-            // -----------------------------------------
-            var normalizedNames = productNames
-    .Select(x => x.ToLower())
-    .ToList();
+            var normalized = productNames.Select(x => x.ToLower()).ToList();
 
-            var exactProducts = await _db.Products
-                .Where(p => normalizedNames.Contains(p.Name.ToLower()))
-                .ToListAsync();
+            var exactProducts = await _productRepo.GetByNamesAsync(productNames);
 
-            List<Product> products;
-
-            if (exactProducts.Any())
-            {
-                products = exactProducts;
-            }
-            else
-            {
-                // -----------------------------------------
-                // STEP 2: FALLBACK → SEMANTIC MATCHING
-                // -----------------------------------------
-                products = await ResolveProductsAsync(productNames);
-            }
+            List<Product> products =
+                exactProducts.Any()
+                    ? exactProducts
+                    : await ResolveProductsAsync(productNames);
 
             if (!products.Any())
                 return new List<RecommendationResult>();
 
-            var resolvedNames = products
-                .Select(p => p.Name)
-                .ToList();
+            var resolvedNames = products.Select(p => p.Name).ToList();
 
-            var embeddings = await _db.Embeddings.ToListAsync();
-
-            // -----------------------------------------
-            // STEP 3: COLLABORATIVE FILTERING
-            // -----------------------------------------
-            var transactions = await _db.Transactions
-                .Include(t => t.Items)
-                .ToListAsync();
+            var embeddings = await _embeddingRepo.GetAllAsync();
+            var transactions = await _transactionRepo.GetAllWithItemsAsync();
 
             var pairFreq = new Dictionary<string, int>();
 
@@ -80,11 +63,10 @@ namespace Track.Services
                     .ToList();
 
                 int matchedCount = resolvedNames.Count(p =>
-                    items.Any(x =>
-                        x.Equals(p, StringComparison.OrdinalIgnoreCase)));
+                    items.Any(x => x.Equals(p, StringComparison.OrdinalIgnoreCase)));
 
-                double matchRatio =
-                    (double)matchedCount / resolvedNames.Count;
+                // ✅ matchRatio logic added back
+                double matchRatio = (double)matchedCount / resolvedNames.Count;
 
                 bool validTransaction;
 
@@ -95,176 +77,124 @@ namespace Track.Services
                 else
                     validTransaction = matchRatio >= 0.4;
 
-                if (!validTransaction)
-                    continue;
+                if (!validTransaction) continue;
 
                 foreach (var item in items)
                 {
-                    if (resolvedNames.Any(p =>
-                        p.Equals(item, StringComparison.OrdinalIgnoreCase)))
+                    if (resolvedNames.Any(p => p.Equals(item, StringComparison.OrdinalIgnoreCase)))
                         continue;
 
                     pairFreq[item] =
-                        pairFreq.GetValueOrDefault(item)
-                        + matchedCount;
+                        pairFreq.GetValueOrDefault(item) + matchedCount;
                 }
             }
 
-            // -----------------------------------------
-            // STEP 4: CONTENT-BASED FILTERING
-            // -----------------------------------------
             var results = new List<RecommendationResult>();
 
             foreach (var candidate in embeddings)
             {
-                if (resolvedNames.Any(p =>
-                    p.Equals(candidate.ProductName,
-                        StringComparison.OrdinalIgnoreCase)))
+                if (resolvedNames.Contains(candidate.ProductName,
+                    StringComparer.OrdinalIgnoreCase))
                     continue;
 
-                double maxSimilarity = 0;
-
-                float[] candidateVector =
-                    VectorHelper.ParseVector(candidate.Vector);
+                double maxSim = 0;
+                float[] candidateVector = VectorHelper.ParseVector(candidate.Vector);
 
                 foreach (var product in products)
                 {
-                    var queryEmbedding =
-                        await _embedding.GetEmbeddingAsync(
-                            $"{product.Name} {product.Description}");
+                    var queryVec = await _embedding.GetEmbeddingAsync(
+                        $"{product.Name} {product.Description}");
 
-                    double similarity =
-                        VectorHelper.CosineSimilarity(
-                            queryEmbedding,
-                            candidateVector);
+                    double sim = VectorHelper.CosineSimilarity(queryVec, candidateVector);
 
-                    if (similarity > maxSimilarity)
-                        maxSimilarity = similarity;
+                    if (sim > maxSim)
+                        maxSim = sim;
                 }
 
                 double confidence =
-                    pairFreq.ContainsKey(candidate.ProductName)
-                        ? pairFreq[candidate.ProductName]
-                        : 0;
+                    pairFreq.GetValueOrDefault(candidate.ProductName);
 
                 double finalScore =
                     confidence < 1
-                        ? (0.2 * confidence) + (0.8 * maxSimilarity)
-                        : (0.6 * confidence) + (0.4 * maxSimilarity);
+                        ? (0.2 * confidence) + (0.8 * maxSim)
+                        : (0.6 * confidence) + (0.4 * maxSim);
 
                 results.Add(new RecommendationResult
                 {
                     Product = candidate.ProductName,
                     Confidence = Math.Round(confidence, 2),
-                    Similarity = Math.Round(maxSimilarity, 2),
+                    Similarity = Math.Round(maxSim, 2),
                     FinalScore = Math.Round(finalScore, 2)
                 });
             }
 
-            // -----------------------------------------
-            // STEP 5: TOP RESULTS
-            // -----------------------------------------
-            var top = results
-                .OrderByDescending(x => x.FinalScore)
-                .Take(3)
-                .ToList();
+            var top = results.OrderByDescending(x => x.FinalScore).Take(3).ToList();
 
-            // -----------------------------------------
-            // STEP 6: AI REASONING
-            // -----------------------------------------
             string cart = string.Join(", ", resolvedNames);
 
             foreach (var item in top)
             {
-                var template =
-                    MarkdownLoader.Load("ProductRecommendation.md");
+                var template = MarkdownLoader.Load("ProductRecommendation.md");
 
-                var prompt =
-                    MarkdownLoader.Replace(
-                        template,
-                        new Dictionary<string, string>
-                        {
-                            { "cart", cart },
-                            { "product", item.Product }
-                        });
-
-                item.Reason =
-                    await _ai.GetCompletionAsync(prompt);
-            }
-
-            // -----------------------------------------
-            // STEP 7: LOGGING
-            // -----------------------------------------
-            foreach (var item in top)
-            {
-                _db.RecommendationLogs.Add(new RecommendationLog
+                var prompt = MarkdownLoader.Replace(template, new Dictionary<string, string>
                 {
-                    RequestedProduct = cart,
-                    RecommendedProduct = item.Product,
-                    Confidence = item.Confidence,
-                    Similarity = item.Similarity,
-                    FinalScore = item.FinalScore,
-                    Reason = item.Reason,
-                    CreatedAt = DateTime.UtcNow
+                    { "cart", cart },
+                    { "product", item.Product }
                 });
+
+                item.Reason = await _ai.GetCompletionAsync(prompt);
             }
 
-            await _db.SaveChangesAsync();
+            var logs = top.Select(item => new RecommendationLog
+            {
+                RequestedProduct = cart,
+                RecommendedProduct = item.Product,
+                Confidence = item.Confidence,
+                Similarity = item.Similarity,
+                FinalScore = item.FinalScore,
+                Reason = item.Reason,
+                CreatedAt = DateTime.UtcNow
+            }).ToList();
+
+            await _logRepo.AddRangeAsync(logs);
+            await _logRepo.SaveChangesAsync();
 
             return top;
         }
 
-        // -----------------------------------------
-        // SEMANTIC PRODUCT RESOLVER
-        // -----------------------------------------
-        private async Task<List<Product>> ResolveProductsAsync(
-            List<string> inputs)
+        private async Task<List<Product>> ResolveProductsAsync(List<string> inputs)
         {
-            var embeddings = await _db.Embeddings.ToListAsync();
-
-            var matchedProducts = new List<Product>();
+            var embeddings = await _embeddingRepo.GetAllAsync();
+            var result = new List<Product>();
 
             foreach (var input in inputs)
             {
-                var inputVector =
-                    await _embedding.GetEmbeddingAsync(input);
+                var inputVec = await _embedding.GetEmbeddingAsync(input);
 
-                double bestSimilarity = 0;
-                string? bestProduct = null;
+                double bestSim = 0;
+                string? best = null;
 
-                foreach (var candidate in embeddings)
+                foreach (var e in embeddings)
                 {
-                    float[] candidateVector =
-                        VectorHelper.ParseVector(candidate.Vector);
+                    var vec = VectorHelper.ParseVector(e.Vector);
+                    var sim = VectorHelper.CosineSimilarity(inputVec, vec);
 
-                    double similarity =
-                        VectorHelper.CosineSimilarity(
-                            inputVector,
-                            candidateVector);
-
-                    if (similarity > bestSimilarity)
+                    if (sim > bestSim)
                     {
-                        bestSimilarity = similarity;
-                        bestProduct = candidate.ProductName;
+                        bestSim = sim;
+                        best = e.ProductName;
                     }
                 }
 
-                if (bestSimilarity >= 0.60 &&
-                    bestProduct != null)
+                if (bestSim >= 0.80 && best != null)
                 {
-                    var product =
-                        await _db.Products
-                            .FirstOrDefaultAsync(p =>
-                                p.Name == bestProduct);
-
+                    var product = await _productRepo.GetByNameAsync(best);
                     if (product != null)
-                        matchedProducts.Add(product);
+                        result.Add(product);
                 }
             }
 
-            return matchedProducts
-                .DistinctBy(p => p.Name)
-                .ToList();
+            return result.DistinctBy(p => p.Name).ToList();
         }
     }
 }

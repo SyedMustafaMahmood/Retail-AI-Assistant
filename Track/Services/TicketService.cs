@@ -1,24 +1,30 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Text;
 using Track.AI;
-using Track.Data;
 using Track.DTO;
 using Track.Helpers;
 using Track.Models;
+using Track.Repositories.Implementations;
+using Track.Repositories.Interfaces;
 
 namespace Track.Services
 {
     public class TicketService
     {
         private readonly IAIClient _aiClient;
-        private readonly AppDbContext _db;
+        private readonly ITicketRepository _ticketRepo;
+        private readonly IRequestLogRepository _logRepo;
 
-        public TicketService(IAIClient aiClient, AppDbContext db)
+        public TicketService(
+            IAIClient aiClient,
+            ITicketRepository ticketRepo,
+            IRequestLogRepository logRepo)
         {
             _aiClient = aiClient;
-            _db = db;
+            _ticketRepo = ticketRepo;
+            _logRepo = logRepo;
         }
 
-        //  Create ticket and save to DB
         public async Task<Ticket> CreateTicketAsync(TicketRequest request)
         {
             var ticket = new Ticket
@@ -30,22 +36,20 @@ namespace Track.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            _db.Tickets.Add(ticket);
-            await _db.SaveChangesAsync();
+            await _ticketRepo.AddAsync(ticket);
+            await _ticketRepo.SaveChangesAsync();
 
             return ticket;
         }
 
-        //  Get all tickets from DB
         public async Task<List<Ticket>> GetAllTicketsAsync()
         {
-            return await _db.Tickets.OrderByDescending(t => t.CreatedAt).ToListAsync();
+            return await _ticketRepo.GetAllAsync();
         }
 
-        //  Fetch ticket by ID → summarize via Gemini
         public async Task<TicketSummaryResponse?> SummarizeByIdAsync(int id)
         {
-            var ticket = await _db.Tickets.FindAsync(id);
+            var ticket = await _ticketRepo.GetByIdAsync(id);
 
             if (ticket == null)
                 return null;
@@ -54,24 +58,27 @@ namespace Track.Services
             {
                 var template = MarkdownLoader.Load("TicketSummarization.md");
 
-                var prompt = MarkdownLoader.Replace(template, new Dictionary<string, string>
-                {
-                    { "customer", ticket.CustomerName },
-                    { "subject", ticket.Subject },
-                    { "description", ticket.Description }
-                });
+                var prompt = MarkdownLoader.Replace(template,
+                    new Dictionary<string, string>
+                    {
+                        { "customer", ticket.CustomerName },
+                        { "subject", ticket.Subject },
+                        { "description", ticket.Description }
+                    });
 
                 var summary = await _aiClient.GetCompletionAsync(prompt);
 
-                _db.RequestLogs.Add(new RequestLog
+                await _logRepo.AddAsync(new RequestLog
                 {
                     InputText = ticket.Description,
                     OutputText = summary,
                     CreatedAt = DateTime.UtcNow,
                     IsSuccess = true
                 });
+
                 ticket.Status = "Reviewed";
-                await _db.SaveChangesAsync();
+
+                await _ticketRepo.SaveChangesAsync();
 
                 return new TicketSummaryResponse
                 {
@@ -83,7 +90,7 @@ namespace Track.Services
             }
             catch (Exception ex)
             {
-                _db.RequestLogs.Add(new RequestLog
+                await _logRepo.AddAsync(new RequestLog
                 {
                     InputText = ticket.Description,
                     OutputText = ex.ToString(),
@@ -91,57 +98,132 @@ namespace Track.Services
                     IsSuccess = false
                 });
 
-                await _db.SaveChangesAsync();
+                await _ticketRepo.SaveChangesAsync();
 
                 throw;
             }
         }
-        //Get Ticket By ID
-        public async Task<Ticket?> GetTicketByIdAsync(int id, string username, string role)
+
+        public async Task StreamSummaryByIdAsync(
+    int id,
+    HttpResponse response)
         {
-            var ticket = await _db.Tickets.FindAsync(id);
+            var ticket = await _ticketRepo.GetByIdAsync(id);
+
+            if (ticket == null)
+            {
+                response.StatusCode = 404;
+                await response.WriteAsync("Ticket not found");
+                return;
+            }
+
+            try
+            {
+                var template = MarkdownLoader.Load("TicketSummarization.md");
+
+                var prompt = MarkdownLoader.Replace(template,
+                    new Dictionary<string, string>
+                    {
+                { "customer", ticket.CustomerName },
+                { "subject", ticket.Subject },
+                { "description", ticket.Description }
+                    });
+
+                var finalSummary = new StringBuilder();
+
+                await foreach (var chunk in _aiClient.GetCompletionStreamAsync(prompt))
+                {
+                    finalSummary.Append(chunk);
+
+                    await response.WriteAsync(chunk);
+
+                    await response.Body.FlushAsync();
+                }
+
+                await _logRepo.AddAsync(new RequestLog
+                {
+                    InputText = ticket.Description,
+                    OutputText = finalSummary.ToString(),
+                    CreatedAt = DateTime.UtcNow,
+                    IsSuccess = true
+                });
+
+                ticket.Status = "Reviewed";
+
+                await _ticketRepo.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                await _logRepo.AddAsync(new RequestLog
+                {
+                    InputText = ticket.Description,
+                    OutputText = ex.ToString(),
+                    CreatedAt = DateTime.UtcNow,
+                    IsSuccess = false
+                });
+
+                await _ticketRepo.SaveChangesAsync();
+
+                throw;
+            }
+        }
+
+        public async Task<Ticket?> GetTicketByIdAsync(
+            int id,
+            string username,
+            string role)
+        {
+            var ticket = await _ticketRepo.GetByIdAsync(id);
 
             if (ticket == null)
                 return null;
 
-            // Admin & SupportAgent can see everything
             if (role == "Admin" || role == "SupportAgent")
                 return ticket;
 
-            // Customer can only see their own ticket
-            if (role == "Customer" && ticket.CustomerName == username)
+            if (role == "Customer" &&
+                ticket.CustomerName == username)
                 return ticket;
 
-            // Not allowed
             return null;
         }
-        //delete ticket by id
+
         public async Task<bool> DeleteTicketAsync(int id)
         {
-            var ticket = await _db.Tickets.FindAsync(id);
+            var ticket = await _ticketRepo.GetByIdAsync(id);
 
             if (ticket == null)
                 return false;
 
-            _db.Tickets.Remove(ticket);
-            await _db.SaveChangesAsync();
+            await _ticketRepo.DeleteAsync(ticket);
+
+            await _ticketRepo.SaveChangesAsync();
 
             return true;
         }
-        // get ticket by status 
+
         public async Task<List<Ticket>> GetTicketsByStatusAsync(string status)
         {
-            return await _db.Tickets
-                .Where(t => t.Status.ToLower() == status.ToLower())
-                .ToListAsync();
+            return await _ticketRepo.GetByStatusAsync(status);
         }
 
-        //get my tickets
+        public async Task<bool> UpdateStatusAsync(int id, string status)
+        {
+            var ticket = await _ticketRepo.GetByIdAsync(id);
+
+            if (ticket == null)
+                return false;
+
+            ticket.Status = status;
+
+            await _ticketRepo.SaveChangesAsync();
+
+            return true;
+        }
+
         public async Task<List<Ticket>> GetMyTicketsAsync(string customerName)
         {
-            return await _db.Tickets
-                .Where(t => t.CustomerName == customerName)
-                .ToListAsync();
+            return await _ticketRepo.GetByCustomerAsync(customerName);
         }
     }
 }

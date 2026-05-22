@@ -6,6 +6,8 @@ using System.Security.Claims;
 using System.Text;
 using Track.AI;
 using Track.Data;
+using Track.Repositories.Implementations;
+using Track.Repositories.Interfaces;
 using Track.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -101,19 +103,44 @@ builder.Services.AddScoped<IEmbeddingClient, EmbeddingClient>();
 builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddScoped<IPolicyQAService, PolicyQAService>();
+builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
+builder.Services.AddScoped<IDocumentChunkRepository, DocumentChunkRepository>();
+builder.Services.AddScoped<IQueryLogRepository, QueryLogRepository>();
+
 
 builder.Services.AddScoped<TicketService>();
+builder.Services.AddScoped<IRequestLogRepository, RequestLogRepository>();
+builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+
+
 
 builder.Services.AddScoped<RecommendationService>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IEmbeddingRepository, EmbeddingRepository>();
+builder.Services.AddScoped<IRecommendationLogRepository, RecommendationLogRepository>();
+
+
+
 
 builder.Services.AddScoped<EmbeddingBuilderService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins("http://localhost:4200", "https" +
+            "://localhost:4200")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 //Api versioining
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
-    options.AssumeDefaultVersionWhenUnspecified = false;
+    options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
 })
@@ -200,6 +227,9 @@ if (app.Environment.IsDevelopment())
 
 
 
+
+app.UseCors("AllowAngular");
+
 // =========================
 // AUTHENTICATION + AUTHORIZATION
 // =========================
@@ -207,7 +237,7 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-
+app.UseStaticFiles();
 
 // =========================
 // MAP CONTROLLERS

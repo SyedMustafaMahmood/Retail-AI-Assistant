@@ -1,0 +1,20 @@
+<nav class="navbar">
+  <div class="brand">
+
+  <div class="logo-circle">
+    AI
+  </div>
+
+  <div>
+    <h1>E3 Retail</h1>
+    <p>Retail AI Assistant</p>
+  </div>
+
+</div>
+
+  <div class="nav-right" *ngIf="currentUser$ | async as user">
+    <span class="nav-user">{{ user.name }}</span>
+    <span class="nav-role">{{ user.role }}</span>
+    <button class="logout-btn" (click)="logout()">Sign out</button>
+  </div>
+</nav>
