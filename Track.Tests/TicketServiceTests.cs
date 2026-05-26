@@ -121,7 +121,7 @@ namespace Track.Tests
                 result!.Summary);
 
             Assert.Equal(
-                "Reviewed",
+                "Open",
                 ticket.Status);
 
             _logRepoMock.Verify(

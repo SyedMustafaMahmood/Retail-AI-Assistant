@@ -87,11 +87,24 @@ export class AdminPolicy implements OnInit {
 
     this.apiService.askPolicy(userMessage).subscribe({
       next: (response) => {
-        console.log('Policy response:', response); // ✅ Debug
-        this.messages = [...this.messages, { role: 'assistant', text: response }];
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      },
+
+  console.log('Policy response:', response);
+
+  const formattedResponse = response
+    .replace(/📌/g, '\n📌')
+    .replace(/⚠️/g, '\n⚠️');
+
+  this.messages = [
+    ...this.messages,
+    {
+      role: 'assistant',
+      text: formattedResponse
+    }
+  ];
+
+  this.isLoading = false;
+  this.cdr.detectChanges();
+},
       error: (err) => {
         console.log('Policy error:', err); // ✅ Debug
         this.messages = [...this.messages, {

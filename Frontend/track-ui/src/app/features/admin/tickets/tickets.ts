@@ -4,25 +4,31 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../../core/services/api';
 import { AuthService } from '../../../core/services/auth';
-import { Ticket, TicketSummaryResponse } from '../../../shared/models/ticket';
+import { Ticket } from '../../../shared/models/ticket';
 import { User } from '../../../shared/models/user';
-
 @Component({
   selector: 'app-admin-tickets',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './tickets.html',
   styleUrl: './tickets.css'
+  
 })
 export class AdminTickets implements OnInit {
+
   tickets: Ticket[] = [];
   filteredTickets: Ticket[] = [];
   selectedTicket: Ticket | null = null;
-  summary: TicketSummaryResponse | null = null;
+
+  // ✅ FIX: streaming needs string, NOT object
+  summaryText: string = "";
+
   currentUser: User | null = null;
+
   isLoadingTickets = false;
   isSummarizing = false;
   isUpdatingStatus = false;
+
   filterStatus = 'All';
   statuses = ['All', 'Open', 'InProgress', 'Resolved'];
 
@@ -30,7 +36,7 @@ export class AdminTickets implements OnInit {
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef  // ✅ Added
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -40,17 +46,16 @@ export class AdminTickets implements OnInit {
 
   loadTickets(): void {
     this.isLoadingTickets = true;
+
     this.apiService.getAllTickets().subscribe({
       next: (tickets) => {
         this.tickets = tickets;
         this.applyFilter();
         this.isLoadingTickets = false;
-        this.cdr.detectChanges(); // ✅
-      },
-      error: (err) => {
-        console.log('Error loading tickets:', err);
-        this.isLoadingTickets = false;
         this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoadingTickets = false;
         alert('Failed to load tickets.');
       }
     });
@@ -60,7 +65,8 @@ export class AdminTickets implements OnInit {
     this.filteredTickets = this.filterStatus === 'All'
       ? this.tickets
       : this.tickets.filter(t => t.status === this.filterStatus);
-    this.cdr.detectChanges(); // ✅
+
+    this.cdr.detectChanges();
   }
 
   setFilter(status: string): void {
@@ -70,64 +76,76 @@ export class AdminTickets implements OnInit {
       this.apiService.getAllTickets().subscribe({
         next: (tickets) => {
           this.filteredTickets = tickets;
-          this.cdr.detectChanges(); // ✅
-        },
-        error: () => alert('Failed to load tickets.')
+          this.cdr.detectChanges();
+        }
       });
     } else {
       this.apiService.getTicketsByStatus(status).subscribe({
         next: (tickets) => {
           this.filteredTickets = tickets;
-          this.cdr.detectChanges(); // ✅
-        },
-        error: () => alert('Failed to load tickets.')
+          this.cdr.detectChanges();
+        }
       });
     }
   }
 
   selectTicket(ticket: Ticket): void {
     this.selectedTicket = ticket;
-    this.summary = null;
-    this.cdr.detectChanges(); // ✅
+
+    // ✅ reset streaming text
+    this.summaryText = "";
+
+    this.cdr.detectChanges();
   }
 
-  summarize(): void {
-    if (!this.selectedTicket) return;
-    this.isSummarizing = true;
+  // ================================
+  // 🚀 STREAMING SUMMARIZE FUNCTION
+  // ================================
+  async summarize(): Promise<void> {
 
-    this.apiService.summarizeTicket(this.selectedTicket.id).subscribe({
-      next: (response) => {
-        this.summary = response;
-        this.isSummarizing = false;
-        this.cdr.detectChanges(); // ✅
-      },
-      error: (err) => {
-        console.log('Summarize error:', err);
-        this.isSummarizing = false;
-        this.cdr.detectChanges();
-        alert('Failed to summarize ticket.');
-      }
-    });
+    if (!this.selectedTicket) return;
+
+    this.isSummarizing = true;
+    this.summaryText = "";
+    this.cdr.detectChanges();
+
+    try {
+      await this.apiService.summarizeTicketStream(
+        this.selectedTicket.id,
+        (chunk: string) => {
+          this.summaryText += chunk;
+          this.cdr.detectChanges();
+        }
+      );
+
+      this.isSummarizing = false;
+      this.cdr.detectChanges();
+    }
+    catch (err: any) {
+  console.error("FULL ERROR:", err);
+  console.error("STATUS:", err?.status);
+  console.error("MESSAGE:", err?.message);
+}
   }
 
   updateStatus(status: string): void {
     if (!this.selectedTicket) return;
+
     this.isUpdatingStatus = true;
 
-    this.apiService.updateTicketStatus(this.selectedTicket.id, status).subscribe({
-      next: () => {
-        this.selectedTicket!.status = status as Ticket['status'];
-        this.isUpdatingStatus = false;
-        this.cdr.detectChanges(); // ✅
-        this.loadTickets();
-      },
-      error: (err) => {
-        console.log('Update status error:', err);
-        this.isUpdatingStatus = false;
-        this.cdr.detectChanges();
-        alert('Failed to update status.');
-      }
-    });
+    this.apiService.updateTicketStatus(this.selectedTicket.id, status)
+      .subscribe({
+        next: () => {
+          this.selectedTicket!.status = status as Ticket['status'];
+          this.isUpdatingStatus = false;
+          this.loadTickets();
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.isUpdatingStatus = false;
+          alert('Failed to update status.');
+        }
+      });
   }
 
   getStatusClass(status: string): string {
@@ -135,11 +153,10 @@ export class AdminTickets implements OnInit {
       case 'Open': return 'status-open';
       case 'InProgress': return 'status-progress';
       case 'Resolved': return 'status-resolved';
-      case 'Reviewed': return 'status-resolved'; // ✅ Added
+      case 'Reviewed': return 'status-resolved';
       default: return '';
     }
   }
-
   logout(): void {
     this.authService.logout();
   }

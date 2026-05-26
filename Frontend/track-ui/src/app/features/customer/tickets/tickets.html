@@ -77,6 +77,34 @@
       <p>Loading your tickets...</p>
     </div>
 
+    <!-- Filter Buttons -->
+    <div class="filter-buttons" *ngIf="!isLoadingTickets && tickets.length > 0">
+      <button 
+        class="filter-btn" 
+        [class.active]="selectedStatus === 'All'"
+        (click)="selectedStatus = 'All'; filterTickets()">
+        All
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="selectedStatus === 'Open'"
+        (click)="selectedStatus = 'Open'; filterTickets()">
+        Open
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="selectedStatus === 'InProgress'"
+        (click)="selectedStatus = 'InProgress'; filterTickets()">
+        In Progress
+      </button>
+      <button 
+        class="filter-btn" 
+        [class.active]="selectedStatus === 'Resolved'"
+        (click)="selectedStatus = 'Resolved'; filterTickets()">
+        Resolved
+      </button>
+    </div>
+
     <!-- Empty State -->
     <div class="empty-state" *ngIf="!isLoadingTickets && tickets.length === 0 && !showForm">
       <div class="empty-icon">🎫</div>
@@ -88,8 +116,8 @@
     </div>
 
     <!-- Tickets List -->
-    <div class="tickets-list" *ngIf="!isLoadingTickets && tickets.length > 0">
-      <div class="ticket-card" *ngFor="let ticket of tickets">
+    <div class="tickets-list" *ngIf="!isLoadingTickets && filteredTickets.length > 0">
+      <div class="ticket-card" *ngFor="let ticket of filteredTickets">
         <div class="ticket-header">
           <div class="ticket-meta">
             <span class="ticket-id">#{{ ticket.id }}</span>

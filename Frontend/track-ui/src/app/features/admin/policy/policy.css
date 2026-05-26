@@ -791,3 +791,6 @@
     min-height: 380px;
   }
 }
+.message-text {
+  white-space: pre-line;
+}

@@ -16,10 +16,12 @@ import { User } from '../../../shared/models/user';
 })
 export class Tickets implements OnInit {
   tickets: Ticket[] = [];
+  filteredTickets: Ticket[] = [];
   currentUser: User | null = null;
   isLoadingTickets = false;
   isSubmitting = false;
   showForm = false;
+  selectedStatus: string = 'All';
 
   newTicket: TicketRequest = {
     customerName: '',
@@ -48,8 +50,9 @@ export class Tickets implements OnInit {
       next: (tickets) => {
         console.log('Tickets loaded:', tickets);
         this.tickets = tickets;
+        this.filteredTickets = tickets;
         this.isLoadingTickets = false;
-        this.cdr.detectChanges(); // ✅ Force UI update
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.log('Error loading tickets:', err);
@@ -58,6 +61,15 @@ export class Tickets implements OnInit {
         alert('Failed to load tickets.');
       }
     });
+  }
+
+  filterTickets(): void {
+    if (this.selectedStatus === 'All') {
+      this.filteredTickets = this.tickets;
+    } else {
+      this.filteredTickets = this.tickets.filter(ticket => ticket.status === this.selectedStatus);
+    }
+    this.cdr.detectChanges();
   }
 
   submitTicket(): void {

@@ -2,6 +2,7 @@
 using Track.Data;
 using Track.Models;
 using Track.Repositories.Interfaces;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace Track.Repositories.Implementations
 {
@@ -46,6 +47,8 @@ namespace Track.Repositories.Implementations
 
         public async Task<List<Ticket>> GetByCustomerAsync(string customerName)
         {
+            customerName = customerName.Trim().ToLower();
+
             return await _db.Tickets
                 .Where(t => t.CustomerName == customerName)
                 .ToListAsync();

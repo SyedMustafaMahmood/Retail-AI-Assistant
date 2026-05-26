@@ -521,6 +521,7 @@
   text-transform: uppercase;
 }
 
+
 .detail-section h4 {
   margin-bottom: 0.9rem;
 }
@@ -789,4 +790,5 @@
   .status-actions {
     width: 100%;
   }
+  
 }

@@ -17,11 +17,6 @@
     </div>
   </nav>
 
-  <!-- ✅ ADD HERE -->
-  <div class="success-toast" *ngIf="successMessage">
-    ✅ {{ successMessage }}
-  </div>
-
   <div class="content">
 
     <!-- Left: Ticket List -->
@@ -31,26 +26,23 @@
         <h2>All Tickets</h2>
         <p class="page-subtitle">{{ filteredTickets.length }} ticket(s)</p>
       </div>
-
-      <!-- Search Bar -->
       <div class="search-bar-wrapper">
-        <span class="search-icon">
-          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-          </svg>
-        </span>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Search tickets by name or ID..."
-          [(ngModel)]="searchQuery"
-          (input)="applyFilter()"
-        />
-        <button class="search-clear-btn" *ngIf="searchQuery" (click)="clearSearch()">✕</button>
-      </div>
-
+  <span class="search-icon">
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+  </span>
+  <input
+    type="text"
+    class="search-input"
+    placeholder="Search tickets by name or content..."
+    [(ngModel)]="searchQuery"
+    (input)="applyFilters()"
+  />
+  <button class="search-clear-btn" *ngIf="searchQuery" (click)="clearSearch()">✕</button>
+</div>
 
       <!-- Filter Tabs -->
       <div class="filter-tabs">
@@ -62,7 +54,6 @@
         >{{ status }}</button>
       </div>
 
-      
       <!-- Loading -->
       <div class="loading" *ngIf="isLoadingTickets">
         <div class="spinner"></div>
@@ -92,13 +83,6 @@
           <p class="ticket-customer">{{ ticket.customerName }}</p>
           <p class="ticket-date">{{ ticket.createdAt | date: 'MMM d, y' }}</p>
         </div>
-          <button
-      class="delete-btn"
-      *ngIf="isEligibleForDeletion(tickets)"
-      (click)="deleteTicket(tickets); $event.stopPropagation()"
-    >
-      🗑 Delete
-    </button>
       </div>
 
     </div>
@@ -167,13 +151,6 @@
               [disabled]="selectedTicket.status === 'Resolved' || isUpdatingStatus"
             >Resolved</button>
           </div>
-           <button
-    class="delete-btn"
-    *ngIf="isEligibleForDeletion(selectedTicket)"
-    (click)="deleteTicket(selectedTicket)"
-  >
-    🗑 Delete Ticket
-  </button>
         </div>
 
         <!-- AI Summary -->

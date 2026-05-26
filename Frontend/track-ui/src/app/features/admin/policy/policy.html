@@ -70,7 +70,9 @@
               [class.assistant-message]="message.role === 'assistant'"
             >
               <div class="message-bubble">
-                <p>{{ message.text }}</p>
+                <div class="message-text">
+  {{ message.text }}
+</div>
               </div>
               <span class="message-label">
                 {{ message.role === 'user' ? 'You' : 'Aria' }}

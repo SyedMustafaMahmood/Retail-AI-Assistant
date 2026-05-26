@@ -22,6 +22,6 @@ Your response should include:
 If the answer is not found in the policy information, say:
 "I'm sorry, I couldn't find information about that in our current policies."
 
-Keep the response professional and under 200 words.
+Keep the response professional and under 150 words.
 Question:
 {{query}}

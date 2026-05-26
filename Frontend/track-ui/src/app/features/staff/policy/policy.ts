@@ -41,7 +41,7 @@ export class StaffPolicy implements OnInit {
 
   askQuestion(): void {
     if (!this.query.trim() || this.isLoading) return;
-
+    
     const userMessage = this.query.trim();
     console.log('Asking:', userMessage);
 

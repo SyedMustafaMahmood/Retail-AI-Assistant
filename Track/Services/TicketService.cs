@@ -6,6 +6,7 @@ using Track.Helpers;
 using Track.Models;
 using Track.Repositories.Implementations;
 using Track.Repositories.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Track.Services
 {
@@ -46,7 +47,11 @@ namespace Track.Services
         {
             return await _ticketRepo.GetAllAsync();
         }
+        public async Task<List<Ticket>> SearchTicketsAsync(string query)
+        {
 
+            return await _ticketRepo.GetByCustomerAsync(query);
+        }
         public async Task<TicketSummaryResponse?> SummarizeByIdAsync(int id)
         {
             var ticket = await _ticketRepo.GetByIdAsync(id);
@@ -76,7 +81,7 @@ namespace Track.Services
                     IsSuccess = true
                 });
 
-                ticket.Status = "Reviewed";
+                //ticket.Status = "Reviewed";
 
                 await _ticketRepo.SaveChangesAsync();
 
@@ -148,7 +153,7 @@ namespace Track.Services
                     IsSuccess = true
                 });
 
-                ticket.Status = "Reviewed";
+                //ticket.Status = "Reviewed";
 
                 await _ticketRepo.SaveChangesAsync();
             }
@@ -195,6 +200,13 @@ namespace Track.Services
             if (ticket == null)
                 return false;
 
+            var isOldEnough = (DateTime.UtcNow - ticket.CreatedAt).TotalDays > 10;
+            var isResolved = ticket.Status == "Resolved";
+
+            if (!isResolved || !isOldEnough)
+                throw new InvalidOperationException("Ticket can only be deleted if it is Resolved and older than 30 days.");
+
+
             await _ticketRepo.DeleteAsync(ticket);
 
             await _ticketRepo.SaveChangesAsync();
@@ -224,20 +236,6 @@ namespace Track.Services
         public async Task<List<Ticket>> GetMyTicketsAsync(string customerName)
         {
             return await _ticketRepo.GetByCustomerAsync(customerName);
-        }
-
-        // Update ticket status
-        public async Task<bool> UpdateTicketStatusAsync(int id, string status)
-        {
-            var ticket = await _db.Tickets.FindAsync(id);
-
-            if (ticket == null)
-                return false;
-
-            ticket.Status = status;
-            await _db.SaveChangesAsync();
-
-            return true;
         }
     }
 }

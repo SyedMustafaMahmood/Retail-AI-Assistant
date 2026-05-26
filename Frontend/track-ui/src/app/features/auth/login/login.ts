@@ -35,6 +35,7 @@ export class Login {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: (response) => {
+          window.localStorage.setItem("auth_token", response.accessToken); // 🔥 ADD THIS
         this.isLoading = false;
         switch (response.user.role) {  // ✅ response.user.role not response.role
           case 'Customer':

@@ -6,9 +6,25 @@ Customer: {{customer}}
 Subject: {{subject}}
 Issue Description: {{description}}
 
-Your summary should include:
-- 🔍 Core Issue: What is the main problem?
-- 🧩 Context: Any relevant details from the description
-- ✅ Suggested Action: What should the support team do next?
+FORMAT RULES:
+- Do NOT add any introduction or explanation
+- Use max 1–2 short sentences per section
+- No paragraphs
+- No explanations or reasoning
+- Keep it dashboard-friendly and scannable 
+- start context in new line
+- start Suggested Action in new line
 
-Keep the summary professional, clear, and under 150 words.
+
+OUTPUT FORMAT (STRICT):
+
+🔍 Core Issue:
+<1–2 short sentences only>
+
+🧩 Context:
+<1–2 short sentences only>
+
+✅ Suggested Action:
+<1–2 short sentences only>
+
+keep the summary under 100 words.

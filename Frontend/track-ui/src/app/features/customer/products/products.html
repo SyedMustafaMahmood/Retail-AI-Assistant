@@ -62,7 +62,10 @@
             *ngFor="let product of products"
             [class.in-cart]="isInCart(product)"
           >
-            <div class="product-icon">{{ product.name[0] }}</div>
+          <div class="product-icon">
+            <img *ngIf="product.imageUrl" [src]="product.imageUrl" [alt]="product.name" class="product-img" />
+            <span *ngIf="!product.imageUrl">{{ product.name[0] }}</span>
+          </div>
             <div class="product-info">
               <h3>{{ product.name }}</h3>
               <p>{{ product.description }}</p>
@@ -121,29 +124,26 @@
 
       <div
         class="recommendation-card"
-        *ngFor="let rec of recommendations"
+        *ngFor="let rec of recommendations,let i = index"
       >
         <div class="rec-header">
-          <div class="product-icon small">{{ rec.product[0] }}</div>
+          <div class="product-icon small">
+            <img *ngIf="rec.imageUrl" [src]="rec.imageUrl" [alt]="rec.product" class="product-img" />
+            <span *ngIf="!rec.imageUrl">{{ rec.product[0] }}</span>
+          </div>
           <h3>{{ rec.product }}</h3>
         </div>
         <p class="rec-reason">{{ rec.reason }}</p>
         <div class="rec-scores">
-          <span class="score">
-            <span class="score-label">Match</span>
-            <span class="score-value">{{ (rec.finalScore * 100).toFixed(0) }}%</span>
-          </span>
-          <span class="score">
-            <span class="score-label">Confidence</span>
-            <span class="score-value">{{ rec.confidence }}</span>
-          </span>
-        </div>
+  <span class="score-label">Rating</span>
+  <span class="score-value star">{{ getStars(i) }}</span>
+</div>
         <button
           class="cart-btn"
-          (click)="addToCart({ id: 0, name: rec.product, description: '' })"
-          [disabled]="isInCart({ id: 0, name: rec.product, description: '' })"
+          (click)="addRecommendedToCart(rec)"
+          [disabled]="isInCart(getRecProduct(rec))"
         >
-          {{ isInCart({ id: 0, name: rec.product, description: '' }) ? '✓ Added' : 'Add to Cart' }}
+          {{ isInCart(getRecProduct(rec)) ? '✓ Added' : 'Add to Cart' }}
         </button>
       </div>
 

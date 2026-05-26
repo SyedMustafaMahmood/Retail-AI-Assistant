@@ -64,23 +64,20 @@ builder.Services
 // =========================
 builder.Services.AddAuthorization();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular", policy =>
-    {
-        policy.WithOrigins(
-            "http://localhost:4200",
-            "https://localhost:4200"
-        )
-        .AllowAnyHeader()
-        .AllowAnyMethod();
-    });
-});
+
 
 // =========================
 // CONTROLLERS
 // =========================
 builder.Services.AddControllers();
+
+
+
+// =========================
+// SWAGGER
+// =========================
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 
 
@@ -214,9 +211,19 @@ using (var scope = app.Services.CreateScope())
 // =========================
 // MIDDLEWARE
 // =========================
-app.UseCors("AllowAngular");
-
 app.UseHttpsRedirection();
+
+
+
+// =========================
+// SWAGGER UI
+// =========================
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+
+    app.UseSwaggerUI();
+}
 
 
 
@@ -229,8 +236,9 @@ app.UseCors("AllowAngular");
 app.UseAuthentication();
 
 app.UseAuthorization();
-
 app.UseStaticFiles();
+
+
 
 // =========================
 // MAP CONTROLLERS

@@ -12,7 +12,7 @@ import { map } from 'rxjs/operators';
 })
 export class ApiService {
   private base = environment.apiUrl;
-
+  private baseUrl = 'https://localhost:7073';
   constructor(private http: HttpClient) {}
 
   // ─── Tickets ─────────────────────────────────────────
@@ -33,11 +33,69 @@ export class ApiService {
   }
 
   // Staff + Admin: summarize ticket
-  summarizeTicket(id: number): Observable<TicketSummaryResponse> {
-    return this.http.post<TicketSummaryResponse>(
-      `${this.base}/tickets/${id}/summarize`, {}
-    );
+ async summarizeTicketStream(
+  id: number,
+  onChunk: (chunk: string) => void
+): Promise<void> {
+
+  const token = window.localStorage.getItem("auth_token");
+
+  if (!token) {
+    throw new Error("No auth token found in localStorage");
   }
+
+  const response = await fetch(
+    `${this.base}/tickets/${id}/summarize-stream`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+
+  if (!reader) {
+    throw new Error("No response body for streaming");
+  }
+
+  let buffer = "";
+  let words: string[] = [];
+
+  const delay = (ms: number) =>
+    new Promise(resolve => setTimeout(resolve, ms));
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+
+    // split into words
+    words = buffer.split(/\s+/);
+
+    // keep last partial word in buffer
+    buffer = words.pop() || "";
+
+    // 🔥 WORD BY WORD ANIMATION
+    for (const word of words) {
+      onChunk(word + " ");
+      await delay(60); // 👈 CONTROL SPEED HERE
+    }
+  }
+
+  // flush remaining word
+  if (buffer.trim().length > 0) {
+    onChunk(buffer + " ");
+  }
+}
 
   // Staff + Admin: filter by status
   getTicketsByStatus(status: string): Observable<Ticket[]> {
@@ -49,6 +107,15 @@ export class ApiService {
     return this.http.delete(`${this.base}/tickets/${id}`, { responseType: 'text' });
   }
 
+  //Staff:filter by id
+  getTicketById(id: number): Observable<Ticket> {
+    return this.http.get<Ticket>(`${this.base}/tickets/${id}`);
+  }
+  //staff:filer by customer name
+  searchTickets(query: string): Observable<Ticket[]> {
+    return this.http.get<Ticket[]>(`${this.base}/tickets/search?query=${query}`);
+  }
+  // Staff + Admin: update ticket status
   updateTicketStatus(id: number, status: string): Observable<string> {
   return this.http.patch(
     `${this.base}/tickets/${id}/status`,
