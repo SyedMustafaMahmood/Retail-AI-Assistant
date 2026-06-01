@@ -26,13 +26,13 @@ export class StaffTickets implements OnInit {
   filterStatus = 'All';
   statuses = ['All', 'Open', 'InProgress', 'Resolved'];
   searchQuery = ''; // ← ADD THIS
-  successMessage: string = '';  // ✅ ADD HERE
+  successMessage: string = '';
 
   constructor(
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef  // ✅
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit(): void {
@@ -47,7 +47,7 @@ export class StaffTickets implements OnInit {
         this.tickets = tickets;
         this.applyFilter();
         this.isLoadingTickets = false;
-        this.cdr.detectChanges(); // ✅
+        this.cdr.detectChanges(); 
       },
       error: (err) => {
         console.log('Error loading tickets:', err);
@@ -195,7 +195,7 @@ deleteTicket(ticket: any): void {
       next: () => {
         this.selectedTicket!.status = status as Ticket['status'];
         this.isUpdatingStatus = false;
-        this.cdr.detectChanges(); // ✅
+        this.cdr.detectChanges();
         this.loadTickets();
       },
       error: (err) => {
@@ -212,7 +212,7 @@ deleteTicket(ticket: any): void {
       case 'Open': return 'status-open';
       case 'InProgress': return 'status-progress';
       case 'Resolved': return 'status-resolved';
-      case 'Reviewed': return 'status-resolved'; // ✅
+      case 'Reviewed': return 'status-resolved'; 
       default: return '';
     }
   }

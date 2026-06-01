@@ -1,6 +1,5 @@
 ﻿namespace Track.Models
 {
-    // Models/RequestLog.cs
     public class RequestLog
     {
         public int Id { get; set; }

@@ -20,7 +20,6 @@ export class AdminTickets implements OnInit {
   filteredTickets: Ticket[] = [];
   selectedTicket: Ticket | null = null;
 
-  // ✅ FIX: streaming needs string, NOT object
   summaryText: string = "";
 
   currentUser: User | null = null;
@@ -92,15 +91,13 @@ export class AdminTickets implements OnInit {
   selectTicket(ticket: Ticket): void {
     this.selectedTicket = ticket;
 
-    // ✅ reset streaming text
+    // reset streaming text
     this.summaryText = "";
 
     this.cdr.detectChanges();
   }
 
-  // ================================
-  // 🚀 STREAMING SUMMARIZE FUNCTION
-  // ================================
+  // STREAMING SUMMARIZE FUNCTION
   async summarize(): Promise<void> {
 
     if (!this.selectedTicket) return;

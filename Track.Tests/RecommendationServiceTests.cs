@@ -38,7 +38,7 @@ namespace Track.Tests
                 .Setup(x => x.GetByNamesAsync(It.IsAny<List<string>>()))
                 .ReturnsAsync(new List<Product>());
 
-            // ✅ Add this — mock embeddings so resolver doesn't crash
+            // mock embeddings so resolver doesn't crash
             _embeddingRepo
                 .Setup(x => x.GetAllAsync())
                 .ReturnsAsync(new List<EmbeddingMetadata>());

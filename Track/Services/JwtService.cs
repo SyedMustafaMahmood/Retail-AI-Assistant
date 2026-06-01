@@ -43,7 +43,7 @@ namespace Track.Services
                 SecurityAlgorithms.HmacSha256
             );
 
-            // 🔥 Read from appsettings
+            // Read from appsettings
             int minutes = int.Parse(
                 _config["Jwt:AccessTokenMinutes"]!
             );

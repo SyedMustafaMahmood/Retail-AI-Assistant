@@ -38,21 +38,5 @@ public class PolicyQAController : ControllerBase
         return Ok(result);
     }
 
-    //// ✅ New streaming endpoint
-    //[Authorize]
-    //[HttpPost("ask-stream")]
-    //public async Task AskStream([FromBody] AskRequest request)
-    //{
-    //    if (string.IsNullOrWhiteSpace(request.Query))
-    //        return;
-
-    //    HttpContext.Features
-    //        .Get<IHttpResponseBodyFeature>()?
-    //        .DisableBuffering();
-
-    //    Response.Headers.Append("Content-Type", "text/plain");
-    //    Response.Headers.Append("Cache-Control", "no-cache");
-
-    //    await _service.AskStreamAsync(request.Query, Response);
-    //}
+    
 }

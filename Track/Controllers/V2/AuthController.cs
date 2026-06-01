@@ -23,7 +23,7 @@ namespace Track.Controllers.V2
             _jwt = jwt;
         }
 
-        // ---------------- REGISTER ----------------
+        // REGISTER
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterRequest request)
         {
@@ -50,7 +50,7 @@ namespace Track.Controllers.V2
             });
         }
 
-        // ---------------- LOGIN ----------------
+        // LOGIN
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginRequest request)
         {
@@ -93,7 +93,7 @@ namespace Track.Controllers.V2
             });
         }
 
-        // ---------------- REFRESH TOKEN ----------------
+        // REFRESH TOKEN
         [HttpPost("refresh")]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
         {
@@ -109,7 +109,7 @@ namespace Track.Controllers.V2
             if (existingToken.ExpiryDate < DateTime.UtcNow)
                 return Unauthorized("Refresh token expired");
 
-            // 🚀 Revoke old refresh token
+            // Revoke old refresh token
             existingToken.IsRevoked = true;
 
             var user = await _db.Users
@@ -118,10 +118,10 @@ namespace Track.Controllers.V2
             if (user == null)
                 return Unauthorized("User not found");
 
-            // 🚀 Generate NEW access token
+            // Generate new access token
             var newAccessToken = _jwt.GenerateToken(user);
 
-            // 🚀 Generate NEW refresh token
+            // Generate new refresh token
             var newRefreshToken = new RefreshToken
             {
                 Token = Guid.NewGuid().ToString(),
@@ -141,7 +141,7 @@ namespace Track.Controllers.V2
             });
         }
 
-        // ---------------- CREATE AGENT ----------------
+        // CREATE AGENT
         [Authorize(Roles = "Admin")]
         [HttpPost("create-agent")]
         public async Task<IActionResult> CreateAgent(RegisterRequest request)

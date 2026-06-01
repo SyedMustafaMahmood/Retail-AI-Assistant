@@ -27,7 +27,7 @@ export class Products implements OnInit {
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef  // ✅ Add this
+    private cdr: ChangeDetectorRef 
   ) {}
 
   ngOnInit(): void {
@@ -69,7 +69,7 @@ export class Products implements OnInit {
     this.cart = [...this.cart, product];
     console.log('Cart after:', this.cart);
     this.cdr.detectChanges();
-    // ❌ skip recommendation call if coming from recommendations
+    // skip recommendation call if coming from recommendations
   if (this.fromRecommendation) {
     this.fromRecommendation = false;
     return;
@@ -81,7 +81,7 @@ export class Products implements OnInit {
     id: rec.id,
     name: rec.product,
     description: rec.Description,
-    imageUrl: rec.imageUrl  // ✅ comes from backend directly
+    imageUrl: rec.imageUrl  // comes from backend directly
   };
   this.addToCart(product);
 }
@@ -118,13 +118,13 @@ getRecProduct(rec: RecommendationResult): Product {
       next: (results) => {
         this.recommendations = results.map((r, index) => ({
     ...r,
-    id: index + 1000  , // ✅ temporary unique id
+    id: index + 1000  , // temporary unique id
     imageUrl: `https://localhost:7073/images/products/${r.product}.jpg`
   }));
     console.log('Recommendations:', this.recommendations);  // ← add this
 
         this.isLoadingRecommendations = false;
-        this.cdr.detectChanges(); // ✅ Force UI update
+        this.cdr.detectChanges(); // Force UI update
       },
       error: () => {
         this.isLoadingRecommendations = false;

@@ -81,7 +81,6 @@ namespace Track.Services
                     IsSuccess = true
                 });
 
-                //ticket.Status = "Reviewed";
 
                 await _ticketRepo.SaveChangesAsync();
 

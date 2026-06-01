@@ -36,7 +36,6 @@ namespace Track.Controllers
             return Ok(tickets);
         }
 
-        // ✅ Fixed — Admin added
         [Authorize(Roles = "SupportAgent,Admin")]
         [HttpPost("{id}/summarize")]
         public async Task<IActionResult> Summarize(int id)
@@ -47,7 +46,6 @@ namespace Track.Controllers
             return Ok(result);
         }
 
-        // ✅ Fixed — Admin added
         [Authorize(Roles = "SupportAgent,Admin")]
         [HttpPost("{id}/summarize-stream")]
         public async Task SummarizeStream(int id)
@@ -96,7 +94,6 @@ namespace Track.Controllers
             return Ok(tickets);
         }
 
-        // ✅ Fixed — Admin added
         [Authorize(Roles = "SupportAgent,Admin")]
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateTicketStatusRequest request)

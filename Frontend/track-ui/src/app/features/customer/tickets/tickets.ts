@@ -33,7 +33,7 @@ export class Tickets implements OnInit {
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef  // ✅ Added
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
