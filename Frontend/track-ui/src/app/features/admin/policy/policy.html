@@ -23,8 +23,6 @@
       <p class="page-subtitle">Upload policy documents and ask questions</p>
     </div>
 
-    <div class="two-col">
-
       <!-- Left: Upload + Chat -->
       <div class="main-col">
 
@@ -71,8 +69,8 @@
             >
               <div class="message-bubble">
                 <div class="message-text">
-  {{ message.text }}
-</div>
+                  {{ message.text }}
+                </div>
               </div>
               <span class="message-label">
                 {{ message.role === 'user' ? 'You' : 'Aria' }}
@@ -104,28 +102,5 @@
 
       </div>
 
-      <!-- Right: Tips -->
-      <div class="tips-col">
-        <div class="tips-card">
-          <h4>📋 Upload Tips</h4>
-          <ul>
-            <li>Use <strong>.txt</strong> or <strong>.md</strong> format</li>
-            <li>Separate customer and staff policies into different files</li>
-            <li>Latest uploaded document is used for answers</li>
-            <li>Keep policies clear and well structured</li>
-          </ul>
-        </div>
-
-        <div class="tips-card">
-          <h4>💬 Quick Questions</h4>
-          <div class="quick-btns">
-            <button class="quick-btn" (click)="query = 'What is the refund policy?'">Refund policy</button>
-            <button class="quick-btn" (click)="query = 'What is the return window?'">Return window</button>
-            <button class="quick-btn" (click)="query = 'What is the escalation process?'">Escalation process</button>
-          </div>
-        </div>
-      </div>
-
-    </div>
   </div>
 </div>

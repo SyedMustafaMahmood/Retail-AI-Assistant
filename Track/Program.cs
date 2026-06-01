@@ -12,16 +12,12 @@ using Track.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 // =========================
 // DATABASE
 // =========================
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("Default")));
-
-
 
 // =========================
 // JWT AUTHENTICATION
@@ -34,44 +30,45 @@ builder.Services
             new TokenValidationParameters
             {
                 ValidateIssuer = true,
-
                 ValidateAudience = true,
-
                 ValidateLifetime = true,
-
                 ValidateIssuerSigningKey = true,
-
-                ValidIssuer =
-                    builder.Configuration["Jwt:Issuer"],
-
-                ValidAudience =
-                    builder.Configuration["Jwt:Audience"],
-
+                ValidIssuer = builder.Configuration["Jwt:Issuer"],
+                ValidAudience = builder.Configuration["Jwt:Audience"],
                 IssuerSigningKey =
                     new SymmetricSecurityKey(
                         Encoding.UTF8.GetBytes(
                             builder.Configuration["Jwt:Key"]!
                         )),
                 RoleClaimType = ClaimTypes.Role
-
             };
     });
-
-
 
 // =========================
 // AUTHORIZATION
 // =========================
 builder.Services.AddAuthorization();
 
-
+// =========================
+// CORS
+// =========================
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular", policy =>
+    {
+        policy.WithOrigins(
+            "http://localhost:4200",
+            "https://localhost:4200"
+        )
+        .AllowAnyHeader()
+        .AllowAnyMethod();
+    });
+});
 
 // =========================
 // CONTROLLERS
 // =========================
 builder.Services.AddControllers();
-
-
 
 // =========================
 // SWAGGER
@@ -79,64 +76,42 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
-
 // =========================
 // HTTP CLIENT
 // =========================
 builder.Services.AddHttpClient();
 
-
-
 // =========================
 // AI SERVICES
 // =========================
 builder.Services.AddScoped<IAIClient, GeminiClient>();
-
 builder.Services.AddScoped<IEmbeddingClient, EmbeddingClient>();
 
-
-
 // =========================
-// APPLICATION SERVICES
+// REPOSITORIES
 // =========================
-builder.Services.AddScoped<JwtService>();
-
-builder.Services.AddScoped<IPolicyQAService, PolicyQAService>();
 builder.Services.AddScoped<IDocumentRepository, DocumentRepository>();
 builder.Services.AddScoped<IDocumentChunkRepository, DocumentChunkRepository>();
 builder.Services.AddScoped<IQueryLogRepository, QueryLogRepository>();
-
-
-builder.Services.AddScoped<TicketService>();
 builder.Services.AddScoped<IRequestLogRepository, RequestLogRepository>();
 builder.Services.AddScoped<ITicketRepository, TicketRepository>();
-
-
-
-builder.Services.AddScoped<RecommendationService>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<IEmbeddingRepository, EmbeddingRepository>();
 builder.Services.AddScoped<IRecommendationLogRepository, RecommendationLogRepository>();
 
-
-
-
+// =========================
+// APPLICATION SERVICES
+// =========================
+builder.Services.AddScoped<JwtService>();
+builder.Services.AddScoped<IPolicyQAService, PolicyQAService>();
+builder.Services.AddScoped<TicketService>();
+builder.Services.AddScoped<RecommendationService>();
 builder.Services.AddScoped<EmbeddingBuilderService>();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAngular", policy =>
-    {
-        policy.WithOrigins("http://localhost:4200", "https" +
-            "://localhost:4200")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
-//Api versioining
+// =========================
+// API VERSIONING
+// =========================
 builder.Services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -144,10 +119,9 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
 })
-    .AddMvc();
+.AddMvc();
+
 var app = builder.Build();
-
-
 
 // =========================
 // APPLY MIGRATIONS + SEED DATA
@@ -159,13 +133,9 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider
             .GetRequiredService<AppDbContext>();
 
-        // Create DB + Apply Migrations
         db.Database.Migrate();
-
-        // Seed Initial Data
         await DataSeeder.SeedAsync(db);
 
-        // Build Product Embeddings
         var embeddingBuilder = scope.ServiceProvider
             .GetRequiredService<EmbeddingBuilderService>();
 
@@ -177,7 +147,10 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine(ex.ToString());
     }
 }
-//Admin Seeder
+
+// =========================
+// ADMIN SEEDER
+// =========================
 using (var scope = app.Services.CreateScope())
 {
     try
@@ -185,16 +158,10 @@ using (var scope = app.Services.CreateScope())
         var db = scope.ServiceProvider
             .GetRequiredService<AppDbContext>();
 
-        // Apply migrations
         db.Database.Migrate();
-
-        // Seed products + transactions
         await DataSeeder.SeedAsync(db);
-
-        // Seed admin
         AdminSeeder.SeedAdmin(db);
 
-        // Build embeddings
         var embeddingBuilder = scope.ServiceProvider
             .GetRequiredService<EmbeddingBuilderService>();
 
@@ -206,14 +173,11 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
-
 // =========================
 // MIDDLEWARE
 // =========================
+app.UseCors("AllowAngular");        
 app.UseHttpsRedirection();
-
-
 
 // =========================
 // SWAGGER UI
@@ -221,31 +185,20 @@ app.UseHttpsRedirection();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-
     app.UseSwaggerUI();
 }
-
-
-
-
-app.UseCors("AllowAngular");
 
 // =========================
 // AUTHENTICATION + AUTHORIZATION
 // =========================
 app.UseAuthentication();
-
 app.UseAuthorization();
-app.UseStaticFiles();
-
-
+app.UseStaticFiles();             
 
 // =========================
 // MAP CONTROLLERS
 // =========================
 app.MapControllers();
-
-
 
 // =========================
 // RUN APPLICATION

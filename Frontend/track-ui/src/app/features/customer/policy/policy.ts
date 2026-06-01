@@ -19,6 +19,7 @@ export interface PolicyMessage {
   styleUrl: './policy.css'
 })
 export class Policy implements OnInit {
+
   messages: PolicyMessage[] = [];
   query = '';
   isLoading = false;
@@ -28,64 +29,106 @@ export class Policy implements OnInit {
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef  // ✅
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+
     this.currentUser = this.authService.getCurrentUser();
-    this.messages = [{
-      role: 'assistant',
-      text: 'Hi! I can help you with questions about our policies — refunds, returns, exchanges and more. What would you like to know?'
-    }];
+
+    this.messages = [
+      {
+        role: 'assistant',
+        text: 'Hi! I can help you with questions about our policies — refunds, returns, exchanges and more. What would you like to know?'
+      }
+    ];
   }
 
   askQuestion(): void {
+
     if (!this.query.trim() || this.isLoading) return;
 
     const userMessage = this.query.trim();
-    console.log('Asking:', userMessage);
-    console.log('Token:', this.authService.getToken());
 
-    this.messages = [...this.messages, { role: 'user', text: userMessage }];
+    console.log('Asking:', userMessage);
+
+    this.messages = [
+      ...this.messages,
+      {
+        role: 'user',
+        text: userMessage
+      }
+    ];
+
     this.query = '';
     this.isLoading = true;
+
     this.cdr.detectChanges();
 
     this.apiService.askPolicy(userMessage).subscribe({
-      next: (response) => {
+
+      next: (response: string) => {
+
         console.log('Policy response:', response);
-        this.messages = [...this.messages, { role: 'assistant', text: response }];
+
+        const formattedResponse = response
+          .replace(/📌/g, '\n📌')
+          .replace(/⚠️/g, '\n⚠️');
+
+        this.messages = [
+          ...this.messages,
+          {
+            role: 'assistant',
+            text: formattedResponse
+          }
+        ];
+
         this.isLoading = false;
+
         this.cdr.detectChanges();
       },
+
       error: (err) => {
+
         console.log('Policy error:', err);
-        this.messages = [...this.messages, {
-          role: 'assistant',
-          text: 'Sorry, I could not process your question. Please try again.'
-        }];
+
+        this.messages = [
+          ...this.messages,
+          {
+            role: 'assistant',
+            text: 'Sorry, I could not process your question. Please try again.'
+          }
+        ];
+
         this.isLoading = false;
+
         this.cdr.detectChanges();
       }
     });
   }
 
   onKeyPress(event: KeyboardEvent): void {
+
     if (event.key === 'Enter' && !event.shiftKey) {
+
       event.preventDefault();
+
       this.askQuestion();
     }
   }
 
   logout(): void {
+
     this.authService.logout();
   }
 
   goToProducts(): void {
+
     this.router.navigate(['/customer/products']);
   }
 
   goToTickets(): void {
+
     this.router.navigate(['/customer/tickets']);
   }
 }

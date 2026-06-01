@@ -32,8 +32,7 @@
           (click)="setFilter(status)"
         >{{ status }}</button>
       </div>
-      
-      <div class="loading" *ngIf="isLoadingTickets">
+       <div class="loading" *ngIf="isLoadingTickets">
         <div class="spinner"></div><p>Loading tickets...</p>
       </div>
       <div class="empty-state" *ngIf="!isLoadingTickets && filteredTickets.length === 0">

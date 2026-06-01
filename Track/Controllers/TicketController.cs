@@ -10,7 +10,6 @@ namespace Track.Controllers
 {
     [ApiController]
     [Route("api/tickets")]
-
     [Authorize]
     public class TicketController : ControllerBase
     {
@@ -20,6 +19,7 @@ namespace Track.Controllers
         {
             _service = service;
         }
+
         [Authorize(Roles = "Customer")]
         [HttpPost]
         public async Task<IActionResult> CreateTicket([FromBody] TicketRequest request)
@@ -27,6 +27,7 @@ namespace Track.Controllers
             var ticket = await _service.CreateTicketAsync(request);
             return Ok(ticket);
         }
+
         [Authorize(Roles = "SupportAgent,Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAllTickets()
@@ -34,40 +35,39 @@ namespace Track.Controllers
             var tickets = await _service.GetAllTicketsAsync();
             return Ok(tickets);
         }
-        [Authorize(Roles = "SupportAgent")]
+
+        // ✅ Fixed — Admin added
+        [Authorize(Roles = "SupportAgent,Admin")]
         [HttpPost("{id}/summarize")]
         public async Task<IActionResult> Summarize(int id)
         {
             var result = await _service.SummarizeByIdAsync(id);
             if (result == null)
                 return NotFound($"Ticket with ID {id} not found.");
-
             return Ok(result);
         }
-        [Authorize(Roles = "SupportAgent")]
+
+        // ✅ Fixed — Admin added
+        [Authorize(Roles = "SupportAgent,Admin")]
         [HttpPost("{id}/summarize-stream")]
         public async Task SummarizeStream(int id)
         {
             HttpContext.Features
                 .Get<IHttpResponseBodyFeature>()?
                 .DisableBuffering();
-
             Response.Headers.Append("Content-Type", "text/plain");
             Response.Headers.Append("Cache-Control", "no-cache");
-
             await _service.StreamSummaryByIdAsync(id, Response);
         }
-        // [Authorize]
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTicketById(int id)
         {
             var user = User.Identity?.Name;
             var role = User.FindFirst(ClaimTypes.Role)?.Value;
             var ticket = await _service.GetTicketByIdAsync(id, user!, role!);
-
             if (ticket == null)
-                return Forbid(); // or NotFound depending on design
-
+                return Forbid();
             return Ok(ticket);
         }
 
@@ -78,18 +78,15 @@ namespace Track.Controllers
             try
             {
                 var result = await _service.DeleteTicketAsync(id);
-
                 if (!result)
                     return NotFound($"Ticket with ID {id} not found.");
-
                 return Ok("Ticket deleted successfully");
             }
-            catch(InvalidOperationException ex)
+            catch (InvalidOperationException ex)
             {
                 return BadRequest(ex.Message);
             }
         }
-
 
         [Authorize(Roles = "SupportAgent,Admin")]
         [HttpGet("status/{status}")]
@@ -98,18 +95,18 @@ namespace Track.Controllers
             var tickets = await _service.GetTicketsByStatusAsync(status);
             return Ok(tickets);
         }
-        [Authorize(Roles = "SupportAgent")]
+
+        // ✅ Fixed — Admin added
+        [Authorize(Roles = "SupportAgent,Admin")]
         [HttpPatch("{id}/status")]
         public async Task<IActionResult> UpdateStatus(int id, [FromBody] UpdateTicketStatusRequest request)
         {
             var result = await _service.UpdateStatusAsync(id, request.Status);
-
             if (!result)
                 return NotFound($"Ticket {id} not found");
-
             return Ok("Status updated successfully");
         }
-        //search by name
+
         [Authorize(Roles = "SupportAgent,Admin")]
         [HttpGet("search")]
         public async Task<IActionResult> SearchTickets([FromQuery] string query)
@@ -118,15 +115,12 @@ namespace Track.Controllers
             return Ok(tickets);
         }
 
-
         [Authorize(Roles = "Customer")]
         [HttpGet("my")]
         public async Task<IActionResult> GetMyTickets()
         {
             var username = User.Identity?.Name;
-
             var tickets = await _service.GetMyTicketsAsync(username!);
-
             return Ok(tickets);
         }
     }

@@ -1,12 +1,12 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Track.DTO;
 using Track.Services;
 
 [ApiController]
 [Route("api/policy")]
-
 public class PolicyQAController : ControllerBase
 {
     private readonly IPolicyQAService _service;
@@ -27,7 +27,7 @@ public class PolicyQAController : ControllerBase
         return Ok(new { message = "Document uploaded successfully." });
     }
 
-   [Authorize] // Any authenticated user (Customer or Agent)
+    [Authorize]
     [HttpPost("ask")]
     public async Task<IActionResult> Ask([FromBody] AskRequest request)
     {
@@ -35,6 +35,24 @@ public class PolicyQAController : ControllerBase
             return BadRequest("Query cannot be empty.");
 
         var result = await _service.AskAsync(request.Query);
-        return Ok(new { answer = result });
+        return Ok(result);
     }
+
+    //// ✅ New streaming endpoint
+    //[Authorize]
+    //[HttpPost("ask-stream")]
+    //public async Task AskStream([FromBody] AskRequest request)
+    //{
+    //    if (string.IsNullOrWhiteSpace(request.Query))
+    //        return;
+
+    //    HttpContext.Features
+    //        .Get<IHttpResponseBodyFeature>()?
+    //        .DisableBuffering();
+
+    //    Response.Headers.Append("Content-Type", "text/plain");
+    //    Response.Headers.Append("Cache-Control", "no-cache");
+
+    //    await _service.AskStreamAsync(request.Query, Response);
+    //}
 }

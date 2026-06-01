@@ -19,6 +19,7 @@ export interface PolicyMessage {
   styleUrl: './policy.css'
 })
 export class AdminPolicy implements OnInit {
+
   messages: PolicyMessage[] = [];
   query = '';
   isLoading = false;
@@ -31,11 +32,13 @@ export class AdminPolicy implements OnInit {
     private apiService: ApiService,
     private authService: AuthService,
     private router: Router,
-    private cdr: ChangeDetectorRef  // ✅ Added
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
+
     this.currentUser = this.authService.getCurrentUser();
+
     this.messages.push({
       role: 'assistant',
       text: 'Hi! You can upload policy documents and ask questions about them. What would you like to do?'
@@ -43,92 +46,134 @@ export class AdminPolicy implements OnInit {
   }
 
   onFileSelected(event: Event): void {
+
     const input = event.target as HTMLInputElement;
+
     if (input.files && input.files.length > 0) {
+
       this.selectedFile = input.files[0];
       this.uploadSuccess = false;
-      console.log('File selected:', this.selectedFile.name); // ✅ Debug
+
+      console.log('File selected:', this.selectedFile.name);
+
       this.cdr.detectChanges();
     }
   }
 
   uploadDocument(): void {
+
     if (!this.selectedFile) return;
-    console.log('Uploading:', this.selectedFile.name); // ✅ Debug
-    console.log('Token:', this.authService.getToken()); // ✅ Debug
+
+    console.log('Uploading:', this.selectedFile.name);
+
     this.isUploading = true;
+
     this.cdr.detectChanges();
 
     this.apiService.uploadPolicyDocument(this.selectedFile).subscribe({
+
       next: (response) => {
-        console.log('Upload success:', response); // ✅ Debug
+
+        console.log('Upload success:', response);
+
         this.isUploading = false;
         this.uploadSuccess = true;
         this.selectedFile = null;
+
         this.cdr.detectChanges();
       },
+
       error: (err) => {
-        console.log('Upload error:', err); // ✅ Debug
+
+        console.log('Upload error:', err);
+
         this.isUploading = false;
+
         this.cdr.detectChanges();
+
         alert('Failed to upload document.');
       }
     });
   }
 
   askQuestion(): void {
+
     if (!this.query.trim() || this.isLoading) return;
 
     const userMessage = this.query.trim();
-    this.messages = [...this.messages, { role: 'user', text: userMessage }];
+
+    this.messages = [
+      ...this.messages,
+      {
+        role: 'user',
+        text: userMessage
+      }
+    ];
+
     this.query = '';
     this.isLoading = true;
+
     this.cdr.detectChanges();
 
     this.apiService.askPolicy(userMessage).subscribe({
-      next: (response) => {
 
-  console.log('Policy response:', response);
+      next: (response: string) => {
 
-  const formattedResponse = response
-    .replace(/📌/g, '\n📌')
-    .replace(/⚠️/g, '\n⚠️');
+        console.log('Policy response:', response);
 
-  this.messages = [
-    ...this.messages,
-    {
-      role: 'assistant',
-      text: formattedResponse
-    }
-  ];
+        const formattedResponse = response
+          .replace(/📌/g, '\n📌')
+          .replace(/⚠️/g, '\n⚠️');
 
-  this.isLoading = false;
-  this.cdr.detectChanges();
-},
-      error: (err) => {
-        console.log('Policy error:', err); // ✅ Debug
-        this.messages = [...this.messages, {
-          role: 'assistant',
-          text: 'Sorry, I could not process your question. Please try again.'
-        }];
+        this.messages = [
+          ...this.messages,
+          {
+            role: 'assistant',
+            text: formattedResponse
+          }
+        ];
+
         this.isLoading = false;
+
+        this.cdr.detectChanges();
+      },
+
+      error: (err) => {
+
+        console.log('Policy error:', err);
+
+        this.messages = [
+          ...this.messages,
+          {
+            role: 'assistant',
+            text: 'Sorry, I could not process your question. Please try again.'
+          }
+        ];
+
+        this.isLoading = false;
+
         this.cdr.detectChanges();
       }
     });
   }
 
   onKeyPress(event: KeyboardEvent): void {
+
     if (event.key === 'Enter' && !event.shiftKey) {
+
       event.preventDefault();
+
       this.askQuestion();
     }
   }
 
   logout(): void {
+
     this.authService.logout();
   }
 
   goToTickets(): void {
+
     this.router.navigate(['/admin/tickets']);
   }
 }

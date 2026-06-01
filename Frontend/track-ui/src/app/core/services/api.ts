@@ -137,13 +137,13 @@ export class ApiService {
   // ─── Policy ──────────────────────────────────────────
 
   askPolicy(query: string): Observable<string> {
-  return this.http.post<{answer: string}>(
-    `${this.base}/policy/ask`,
-    { query }
-  ).pipe(
-    map(response => response.answer)
-  );
-}
+
+    return this.http.post(
+      `${this.base}/policy/ask`,
+      { query },
+      { responseType: 'text' }
+    );
+  }
 
   uploadPolicyDocument(file: File): Observable<string> {
     const formData = new FormData();
